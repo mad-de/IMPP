@@ -1,0 +1,10 @@
+[package]
+name = "IMPP"
+version = "0.1.0"
+authors = ["mad-de"]
+edition = "2018"
+
+[dependencies]
+
+ureq = "0.11.0"
+rand = "0.7.0"
