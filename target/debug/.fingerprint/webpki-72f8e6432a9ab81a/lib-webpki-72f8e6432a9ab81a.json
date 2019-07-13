@@ -1,1 +1,0 @@
-{"rustc":8228367407602931853,"features":"[\"default\", \"std\", \"trust_anchor_util\"]","target":6577587438388490638,"profile":9935990280773120926,"path":17024651093067578423,"deps":[["ring v0.14.6","ring",4029074978299822179],["untrusted v0.6.2","untrusted",2177815503275033104]],"local":[{"Precalculated":"0.19.1"}],"rustflags":[],"edition":"Edition2015"}
