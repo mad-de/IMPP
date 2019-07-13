@@ -1,5 +1,5 @@
 [package]
-name = "IMPP"
+name = "impp"
 version = "0.1.0"
 authors = ["mad-de"]
 edition = "2018"
