@@ -158,7 +158,7 @@ fn main() {
 	    	    }
     	    	    input = String::from("");
             	    io::stdin().read_line(&mut input).expect("Failed to read line");
-            	    input = input.trim().to_string();
+            	    input = input.trim().to_string().to_uppercase();
 		    if input == characters[correct_answer_num] {
     		    	println!("Correct!");
 		    }
