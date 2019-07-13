@@ -21,10 +21,12 @@ fn extract_field_value (string_array: &mut [String]) {
     let mut pos_alt = 10000;
     let mut pos_alt_2 = 10000;    
     let mut pos = string_array[0].find(begin_chars).unwrap() + begin_chars.chars().count(); // Finds first encounter of a substring in our string
-    if string_array[0].contains(begin_alt_chars) {
+    if string_array[0].contains(begin_alt_chars)
+    {
     	pos_alt = string_array[0].find(begin_alt_chars).unwrap() + begin_alt_chars.chars().count() + begin_alt_extra_chars.chars().count(); // Finds first encounter of a alternative substring in our string
     }
-    if string_array[0].contains(begin_alt_2_chars) {
+    if string_array[0].contains(begin_alt_2_chars)
+    {
     	pos_alt_2 = string_array[0].find(begin_alt_2_chars).unwrap() + begin_alt_2_chars.chars().count() + begin_alt_extra_chars.chars().count(); // Finds first encounter of a alternative substring in our string
     }
     if pos_alt_2 < pos_alt {
@@ -66,7 +68,8 @@ fn main() {
 	if string_array[1] == "EOL" {
 	// if we get the last EOL break
 	}
-	else {
+	else
+	{
 	    this_question = string_array[1].to_string();
 	    extract_field_value(&mut string_array);
 	    if string_array[1] != "EOL" {
@@ -122,7 +125,7 @@ fn main() {
             }
         }
     	else if input == "mc" || input == "mc -n" {
-	            loop {
+	    loop {
     	    	println!("------------------------------------------------------------------------------------------------------");
     	    	let question_num = rand::thread_rng().gen_range(0, questions_db.len());
     	    	let correct_answer_num : usize;
@@ -162,13 +165,13 @@ fn main() {
 		    else {
     		    	println!("Wrong!");
 		    }
-    	    println!("The correct answer is: {}) {}", characters[correct_answer_num], &questions_db[question_num].answer);
+    		    println!("The correct answer is: {}) {}", characters[correct_answer_num], &questions_db[question_num].answer);
 		    if &questions_db[question_num].extra != "" {
 		    println!("Extra info: {}", &questions_db[question_num].extra);
 		    }
-	    }
-	    else {
-        println!("Antwort: \'{}\', Kategorie: \'{}\', Extra: \'{}\'\n", &questions_db[question_num].answer, &questions_db[question_num].category, &questions_db[question_num].extra);
+	        }
+	    	else {
+		     println!("Antwort: \'{}\', Kategorie: \'{}\', Extra: \'{}\'\n", &questions_db[question_num].answer, &questions_db[question_num].category, &questions_db[question_num].extra);
 	       	}
 	     }
     	}
