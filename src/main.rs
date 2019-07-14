@@ -11,8 +11,9 @@ struct Question {
     extra: String,
 }
 
+static BEGIN_CHARS: &'static str = "<td class=\"s4\">";
+
 fn extract_field_value(string_array: &mut [String]) {
-    let begin_chars = "<td class=\"s4\">";
     let mut end_chars = "</td>";
     let begin_alt_chars = "<td class=\"s4 softmerge\">";
     let begin_alt_2_chars = "<td class=\"s5 softmerge\">";
@@ -21,7 +22,7 @@ fn extract_field_value(string_array: &mut [String]) {
     let end_alt_chars = "</div>";
     let mut pos_alt = 10000;
     let mut pos_alt_2 = 10000;
-    let mut pos = string_array[0].find(begin_chars).unwrap() + begin_chars.chars().count(); // Finds first encounter of a substring in our string
+    let mut pos = string_array[0].find(BEGIN_CHARS).unwrap() + BEGIN_CHARS.chars().count(); // Finds first encounter of a substring in our string
     if string_array[0].contains(begin_alt_chars) {
         pos_alt = string_array[0].find(begin_alt_chars).unwrap()
             + begin_alt_chars.chars().count()
@@ -54,7 +55,6 @@ fn main() {
     let url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTo-d-1ObJn_cXyN2uINb1x8nW58qj5oY5hzLqYL4YJTwIjwY-sBrcM2tzGv564b5VzoPHOJSiaUcSW/pubhtml"; // Vokabeln - s4 + s5
     let body = ureq::get(url).call().into_string().unwrap();
 
-    let string_start = "<td class=\"s4\">";
     let mut string_array: [String; 2] = [body, String::from("")]; // Initialize array
     let mut this_question: String;
     let mut this_answer: String;
@@ -62,10 +62,10 @@ fn main() {
     let mut this_extra: String;
 
     let mut questions_db: Vec<Question> = Vec::new();
-    while string_array[0].contains(string_start) {
+    while string_array[0].contains(BEGIN_CHARS) {
         let mut initial = true;
         while (string_array[1] == "" || string_array[1] == "EOL" || initial == true)
-            && string_array[0].contains(string_start)
+            && string_array[0].contains(BEGIN_CHARS)
         {
             // search for the first normally formatted field
             extract_field_value(&mut string_array);
@@ -110,25 +110,26 @@ fn main() {
 
     // START LOOP
     loop {
-        println!("-----------------------\n- Welcome to the IMPP -\n-----------------------\nTo see all questions in the database type db.\nTo play a game of normal mc questions type \'mc\' or \'mc -n\' \nWe have {} items in our database.", questions_db.len());
-        let mut input = String::new();
+        println!("-----------------------\n- Welcome to the IMPP -\n-----------------------\nTo see all questions in the database type db.\nTo play a game of normal single-choice questions type \'mc\' or \'mc -n\'\nFor a game of automatic single-choice questions type \'mc -a\'\nWe have {} items in our database.", questions_db.len());
+        let mut input_root = String::new();
+        let mut input_curr = String::new();
         io::stdin()
-            .read_line(&mut input)
+            .read_line(&mut input_root)
             .expect("Failed to read line");
         /* let input = match input.trim() {
                 Ok(str) => str,
                 Err(_) => continue,
         }; */
 
-        input = input.trim().to_string();
-        if input == "db" {
+        input_root = input_root.trim().to_string();
+        if input_root.contains("db") {
             for item in &questions_db {
                 println!(
                     "Frage: \'{}\', Antwort: \'{}\', Kategorie: \'{}\', Extra: \'{}\'",
                     item.question, item.answer, item.category, item.extra
                 );
             }
-        } else if input == "mc" || input == "mc -n" {
+        } else if input_root.contains("mc") {
             loop {
                 println!("------------------------------------------------------------------------------------------------------");
                 let question_num = rand::thread_rng().gen_range(0, questions_db.len());
@@ -148,14 +149,17 @@ fn main() {
                     String::from("I"),
                     String::from("J"),
                 ];
-                println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", &questions_db[question_num].question);
-                input = String::from("");
-                io::stdin()
-                    .read_line(&mut input)
-                    .expect("Failed to read line");
-                input = input.trim().to_string();
-
-                if input == "m" || input == "mc -n" {
+                if input_root.contains("-a") {
+                    println!("Frage: \'{}\' \n", &questions_db[question_num].question);
+                } else {
+                    println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", &questions_db[question_num].question);
+                    input_curr = String::from("");
+                    io::stdin()
+                        .read_line(&mut input_curr)
+                        .expect("Failed to read line");
+                    input_curr = input_curr.trim().to_string();
+                }
+                if input_root.contains("-a") || input_curr.contains("m") {
                     correct_answer_num = rand::thread_rng().gen_range(0, num_mc_questions);
                     // Generate answers
                     while num_mc < num_mc_questions {
@@ -165,7 +169,7 @@ fn main() {
                                 characters[num_mc], &questions_db[question_num].answer
                             );
                         } else {
-                            temp_question_num = question_num; // Set temporary question to current question so while has to fail initially
+                            temp_question_num = question_num; // Set temporary question to current question so the while has to fail initially
                             while &questions_db[temp_question_num].question
                                 == &questions_db[question_num].question
                                 || &questions_db[temp_question_num].category
@@ -181,12 +185,12 @@ fn main() {
                         }
                         num_mc += 1;
                     }
-                    input = String::from("");
+                    input_curr = String::from("");
                     io::stdin()
-                        .read_line(&mut input)
+                        .read_line(&mut input_curr)
                         .expect("Failed to read line");
-                    input = input.trim().to_string().to_uppercase();
-                    if input == characters[correct_answer_num] {
+                    input_curr = input_curr.trim().to_string().to_uppercase();
+                    if input_curr == characters[correct_answer_num] {
                         println!("Correct!");
                     } else {
                         println!("Wrong!");
