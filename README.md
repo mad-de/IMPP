@@ -3,7 +3,7 @@ Idiotische Multiple-choice Prüfungsfragen Programm
 
 # Install:
 
-Install git (https://www.linode.com/docs/development/version-control/how-to-install-git-on-linux-mac-and-windows/) and rust (https://www.rust-lang.org/tools/install)
+Install git (https://www.linode.com/docs/development/version-control/how-to-install-git-on-linux-mac-and-windows/) and rust (https://rustup.rs/)
 
 In terminal run:
 
