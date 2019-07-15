@@ -31,47 +31,47 @@ fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
     Ok(string_array.to_vec())
 }
 
-    fn main() {
-        let mut input_url = String::new();
-        let prefs_key = "preferences/apps/impp99";
-        let load_preferences = PreferencesMap::<String>::load(&APP_INFO, prefs_key);
-        if load_preferences.is_ok() {
-            let preferences_index = "primary_db";
-            for (index, string) in load_preferences.unwrap() {
-                if index == "primary_db" {
-                    input_url = string;
-                };
-            }
-        } else {
-    loop {
-        println!(
+fn main() {
+    let mut input_url = String::new();
+    let prefs_key = "preferences/apps/impp";
+    let load_preferences = PreferencesMap::<String>::load(&APP_INFO, prefs_key);
+    if load_preferences.is_ok() {
+        let preferences_index = "primary_db";
+        for (index, string) in load_preferences.unwrap() {
+            if index == "primary_db" {
+                input_url = string;
+            };
+        }
+    } else {
+        loop {
+            println!(
             "You seem to be here for the first time. Please specify the URL of your spreadsheet:"
         );
-        io::stdin()
-            .read_line(&mut input_url)
-            .expect("Failed to read line");
-
-        input_url = input_url.trim().to_string();
-
-        println!("Loading your database...");
-
-        let init_raw_data = fetch_data(&input_url).unwrap();
-        let init_questions_db = extract_from_raw_data(init_raw_data);
-
-        if init_questions_db.len() == 0 {
-            println!("Your database seems to be empty. Are you sure you want to continue? y/n");
-            input_url = String::new();
             io::stdin()
                 .read_line(&mut input_url)
                 .expect("Failed to read line");
 
             input_url = input_url.trim().to_string();
-            if input_url == "y" {
+
+            println!("Loading your database...");
+
+            let init_raw_data = fetch_data(&input_url).unwrap();
+            let init_questions_db = extract_from_raw_data(init_raw_data);
+
+            if init_questions_db.len() == 0 {
+                println!("Your database seems to be empty. Are you sure you want to continue? y/n");
+                input_url = String::new();
+                io::stdin()
+                    .read_line(&mut input_url)
+                    .expect("Failed to read line");
+
+                input_url = input_url.trim().to_string();
+                if input_url == "y" {
+                    break;
+                }
+            } else {
                 break;
             }
-        } else {
-            break;
-        }
         }
 
         // Edit the preferences (std::collections::HashMap)
