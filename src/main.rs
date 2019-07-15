@@ -11,7 +11,8 @@ fn print_welcome_msg(number_of_questions: usize) {
 -----------------------
 To see all questions in the database type db.
 To play a game of normal single-choice questions type 'mc' or 'mc -n'
-For a game of automatic single-choice questions type 'mc -a'
+For a game of automatic single-choice questions add '-a' (eg. 'mc -a')
+For a reversed (Jeopardy-Style) game add '-a' (eg. 'mc -a -j')
 We have {} items in our database."#,
         number_of_questions
     );
@@ -60,6 +61,9 @@ fn main() {
                 let mut num_mc = 0;
                 let num_mc_questions = 5;
                 let mut temp_question_num: usize;
+                let mut this_question: String;
+                let mut this_answer: String;
+                let mut this_gen_answer;
                 let characters: [String; 10] = [
                     String::from("A"),
                     String::from("B"),
@@ -72,10 +76,18 @@ fn main() {
                     String::from("I"),
                     String::from("J"),
                 ];
-                if input_root.contains("-a") {
-                    println!("Frage: \'{}\' \n", &questions_db[question_num].question);
+                if input_root.contains("-j") {
+                    // Switch answer and question in jeopardy-mode
+                    this_question = String::from(&questions_db[question_num].answer);
+                    this_answer = String::from(&questions_db[question_num].question);
                 } else {
-                    println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", &questions_db[question_num].question);
+                    this_question = String::from(&questions_db[question_num].question);
+                    this_answer = String::from(&questions_db[question_num].answer);
+                }
+                if input_root.contains("-a") {
+                    println!("Frage: \'{}\' \n", this_question);
+                } else {
+                    println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", this_question);
                     input_curr = String::from("");
                     io::stdin()
                         .read_line(&mut input_curr)
@@ -87,10 +99,7 @@ fn main() {
                     // Generate answers
                     while num_mc < num_mc_questions {
                         if num_mc == correct_answer_num {
-                            println!(
-                                "{}) {}",
-                                characters[num_mc], &questions_db[question_num].answer
-                            );
+                            println!("{}) {}", characters[num_mc], this_answer);
                         } else {
                             temp_question_num = question_num; // Set temporary question to current question so the while has to fail initially
                             while &questions_db[temp_question_num].question
@@ -101,10 +110,16 @@ fn main() {
                                 temp_question_num =
                                     rand::thread_rng().gen_range(0, questions_db.len());
                             }
-                            println!(
-                                "{}) {}",
-                                characters[num_mc], &questions_db[temp_question_num].answer
-                            );
+
+                            if input_root.contains("-j") {
+                                this_gen_answer =
+                                    String::from(&questions_db[temp_question_num].question);
+                            } else {
+                                this_gen_answer =
+                                    String::from(&questions_db[temp_question_num].answer);
+                            }
+
+                            println!("{}) {}", characters[num_mc], this_gen_answer);
                         }
                         num_mc += 1;
                     }
@@ -116,22 +131,15 @@ fn main() {
                     if input_curr == characters[correct_answer_num] {
                         println!("Correct!");
                     } else {
-                        println!("Wrong!");
+                        println!(
+                            "Wrong! The Correct one is {})",
+                            characters[correct_answer_num]
+                        );
                     }
-                    println!(
-                        "The correct answer is: {}) {}",
-                        characters[correct_answer_num], &questions_db[question_num].answer
-                    );
-                    if &questions_db[question_num].extra != "" {
-                        println!("Extra info: {}", &questions_db[question_num].extra);
-                    }
-                } else {
-                    println!(
-                        "Antwort: \'{}\', Kategorie: \'{}\', Extra: \'{}\'\n",
-                        &questions_db[question_num].answer,
-                        &questions_db[question_num].category,
-                        &questions_db[question_num].extra
-                    );
+                }
+                println!("The correct answer is: {}", this_answer);
+                if &questions_db[question_num].extra != "" {
+                    println!("Extra info: {}", &questions_db[question_num].extra);
                 }
             }
         }
