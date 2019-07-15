@@ -11,7 +11,7 @@ In terminal run:
 
     git clone https://github.com/mad-de/IMPP
     cd IMPP/
-    cargo run
+    cargo run --release
 
 ## Run tests
 

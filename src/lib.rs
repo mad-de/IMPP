@@ -1,3 +1,5 @@
+use regex::Regex;
+
 #[derive(Debug)]
 pub struct Question {
     pub question: String,
@@ -6,40 +8,38 @@ pub struct Question {
     pub extra: String,
 }
 
-pub static BEGIN_CHARS: &'static str = r#"<td class="s4">"#;
-
 #[derive(Debug)]
 pub enum Error {
     Input,
 }
+
+pub static BEGIN_CHARS: &'static str = "<td class=\"s[1-9]{1}\">";
+pub static BEGIN_ALT_CHARS: &'static str = "<td class=\"s[1-9]{1} softmerge\">";
+pub static BEGIN_ALT_EXTRA_CHARS: &'static str =
+    r#"<div class="softmerge-inner" style="width: 512px; left: -1px;">"#;
 
 pub fn extract_field_value(string_array: &mut [String]) -> Result<(), Error> {
     if string_array.is_empty() {
         return Err(Error::Input);
     }
     let mut end_chars = "</td>";
-    let begin_alt_chars = "<td class=\"s4 softmerge\">";
-    let begin_alt_2_chars = "<td class=\"s5 softmerge\">";
-    let begin_alt_extra_chars =
-        "<div class=\"softmerge-inner\" style=\"width: 512px; left: -1px;\">";
     let end_alt_chars = "</div>";
     let mut pos_alt = 10000;
-    let mut pos_alt_2 = 10000;
-
-    let mut pos = string_array[0].find(BEGIN_CHARS).unwrap() + BEGIN_CHARS.chars().count(); // Finds first encounter of a substring in our string
-
-    if string_array[0].contains(begin_alt_chars) {
-        pos_alt = string_array[0].find(begin_alt_chars).unwrap()
-            + begin_alt_chars.chars().count()
-            + begin_alt_extra_chars.chars().count(); // Finds first encounter of a alternative substring in our string
-    }
-    if string_array[0].contains(begin_alt_2_chars) {
-        pos_alt_2 = string_array[0].find(begin_alt_2_chars).unwrap()
-            + begin_alt_2_chars.chars().count()
-            + begin_alt_extra_chars.chars().count(); // Finds first encounter of a alternative substring in our string
-    }
-    if pos_alt_2 < pos_alt {
-        pos_alt = pos_alt_2;
+    let mut pos = Regex::new(BEGIN_CHARS)
+        .unwrap()
+        .find(&string_array[0])
+        .unwrap()
+        .end(); // Finds first encounter of a substring in our string
+    if Regex::new(BEGIN_ALT_CHARS)
+        .unwrap()
+        .is_match(&string_array[0])
+    {
+        pos_alt = Regex::new(BEGIN_ALT_CHARS)
+            .unwrap()
+            .find(&string_array[0])
+            .unwrap()
+            .end()
+            + BEGIN_ALT_EXTRA_CHARS.chars().count();
     }
     if pos_alt < pos {
         pos = pos_alt;
@@ -62,10 +62,10 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
     let mut this_extra: String;
     let mut questions_db = vec![];
 
-    while string_array[0].contains(BEGIN_CHARS) {
+    while Regex::new(BEGIN_CHARS).unwrap().is_match(&string_array[0]) {
         let mut initial = true;
         while (string_array[1] == "" || string_array[1] == "EOL" || initial == true)
-            && string_array[0].contains(BEGIN_CHARS)
+            && Regex::new(BEGIN_CHARS).unwrap().is_match(&string_array[0])
         {
             // search for the first normally formatted field
             extract_field_value(&mut string_array).unwrap();

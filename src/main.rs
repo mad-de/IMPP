@@ -1,6 +1,12 @@
 use self::lib::*;
+use preferences::{AppInfo, Preferences, PreferencesMap};
 use rand::Rng;
 use std::io;
+
+const APP_INFO: AppInfo = AppInfo {
+    name: "preferences",
+    author: "Rust language community",
+};
 
 mod lib;
 
@@ -9,19 +15,15 @@ fn print_welcome_msg(number_of_questions: usize) {
         r#"-----------------------
 - Welcome to the IMPP -
 -----------------------
-- To see all questions in the database type db.
-- To play a game of normal single-choice questions type 'mc' or 'mc -n'
+> To see all questions in the database type 'db'.
+> To play a game of normal single-choice questions type 'mc' or 'mc -n'
 |- For a game of automatic single-choice questions add '-a' (eg. 'mc -a')
 |- For a reversed (Jeopardy-Style) game add '-a' (eg. 'mc -a -j')
-- To go back to this menu type 'exit', to quit the program type 'quit'
+> To go back to this menu type 'exit', to quit the program type 'quit'
 We have {} items in our database."#,
         number_of_questions
     );
 }
-
-// CREATE DATABASE
-// "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkvkSX1lrkGyvetFg90smmaGD0rVTz4QteaWNzPkqgUDNDUPjozmp0wlWudKdw-C1F9vTB6N37oYDx/pubhtml"; // Medikamente - s3
-const VOKABELN_URL : &str = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTo-d-1ObJn_cXyN2uINb1x8nW58qj5oY5hzLqYL4YJTwIjwY-sBrcM2tzGv564b5VzoPHOJSiaUcSW/pubhtml"; // Vokabeln - s4 + s5
 
 fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
     let body = ureq::get(url).call().into_string().unwrap();
@@ -29,8 +31,58 @@ fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
     Ok(string_array.to_vec())
 }
 
-fn main() {
-    let raw_data = fetch_data(VOKABELN_URL).unwrap();
+    fn main() {
+        let mut input_url = String::new();
+        let prefs_key = "preferences/apps/impp99";
+        let load_preferences = PreferencesMap::<String>::load(&APP_INFO, prefs_key);
+        if load_preferences.is_ok() {
+            let preferences_index = "primary_db";
+            for (index, string) in load_preferences.unwrap() {
+                if index == "primary_db" {
+                    input_url = string;
+                };
+            }
+        } else {
+    loop {
+        println!(
+            "You seem to be here for the first time. Please specify the URL of your spreadsheet:"
+        );
+        io::stdin()
+            .read_line(&mut input_url)
+            .expect("Failed to read line");
+
+        input_url = input_url.trim().to_string();
+
+        println!("Loading your database...");
+
+        let init_raw_data = fetch_data(&input_url).unwrap();
+        let init_questions_db = extract_from_raw_data(init_raw_data);
+
+        if init_questions_db.len() == 0 {
+            println!("Your database seems to be empty. Are you sure you want to continue? y/n");
+            input_url = String::new();
+            io::stdin()
+                .read_line(&mut input_url)
+                .expect("Failed to read line");
+
+            input_url = input_url.trim().to_string();
+            if input_url == "y" {
+                break;
+            }
+        } else {
+            break;
+        }
+        }
+
+        // Edit the preferences (std::collections::HashMap)
+        let mut insert_preferences: PreferencesMap<String> = PreferencesMap::new();
+        let input_url_2 = &input_url;
+        insert_preferences.insert("primary_db".into(), input_url_2.into());
+        let save_result = insert_preferences.save(&APP_INFO, prefs_key);
+        assert!(save_result.is_ok());
+    }
+
+    let raw_data = fetch_data(&input_url).unwrap();
     let questions_db = extract_from_raw_data(raw_data);
 
     // START LOOP
@@ -92,9 +144,6 @@ fn main() {
                         .read_line(&mut input_curr)
                         .expect("Failed to read line");
                     input_curr = input_curr.trim().to_string();
-                    if input_curr.contains("exit") {
-                        break;
-                    }
                 }
                 if input_root.contains("-a") || input_curr.contains("m") {
                     correct_answer_num = rand::thread_rng().gen_range(0, num_mc_questions);
@@ -130,9 +179,6 @@ fn main() {
                         .read_line(&mut input_curr)
                         .expect("Failed to read line");
                     input_curr = input_curr.trim().to_string().to_uppercase();
-                    if input_curr.contains("EXIT") {
-                        break;
-                    }
                     if input_curr == characters[correct_answer_num] {
                         println!("{}) is correct!", characters[correct_answer_num]);
                     } else {
@@ -145,6 +191,9 @@ fn main() {
                 println!("The correct answer is: {}", this_answer);
                 if &questions_db[question_num].extra != "" {
                     println!("Extra info: {}", &questions_db[question_num].extra);
+                }
+                if input_curr.to_uppercase().contains("EXIT") {
+                    break;
                 }
             }
         }
