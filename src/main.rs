@@ -9,10 +9,11 @@ fn print_welcome_msg(number_of_questions: usize) {
         r#"-----------------------
 - Welcome to the IMPP -
 -----------------------
-To see all questions in the database type db.
-To play a game of normal single-choice questions type 'mc' or 'mc -n'
-For a game of automatic single-choice questions add '-a' (eg. 'mc -a')
-For a reversed (Jeopardy-Style) game add '-a' (eg. 'mc -a -j')
+- To see all questions in the database type db.
+- To play a game of normal single-choice questions type 'mc' or 'mc -n'
+|- For a game of automatic single-choice questions add '-a' (eg. 'mc -a')
+|- For a reversed (Jeopardy-Style) game add '-a' (eg. 'mc -a -j')
+- To go back to this menu type 'exit', to quit the program type 'quit'
 We have {} items in our database."#,
         number_of_questions
     );
@@ -40,13 +41,11 @@ fn main() {
         io::stdin()
             .read_line(&mut input_root)
             .expect("Failed to read line");
-        /* let input = match input.trim() {
-                Ok(str) => str,
-                Err(_) => continue,
-        }; */
 
         input_root = input_root.trim().to_string();
-        if input_root.contains("db") {
+        if input_root.contains("quit") {
+            break;
+        } else if input_root.contains("db") {
             for item in &questions_db {
                 println!(
                     "Frage: \'{}\', Antwort: \'{}\', Kategorie: \'{}\', Extra: \'{}\'",
@@ -76,8 +75,8 @@ fn main() {
                     String::from("I"),
                     String::from("J"),
                 ];
+                // Switch answer and question in jeopardy-mode
                 if input_root.contains("-j") {
-                    // Switch answer and question in jeopardy-mode
                     this_question = String::from(&questions_db[question_num].answer);
                     this_answer = String::from(&questions_db[question_num].question);
                 } else {
@@ -93,6 +92,9 @@ fn main() {
                         .read_line(&mut input_curr)
                         .expect("Failed to read line");
                     input_curr = input_curr.trim().to_string();
+                    if input_curr.contains("exit") {
+                        break;
+                    }
                 }
                 if input_root.contains("-a") || input_curr.contains("m") {
                     correct_answer_num = rand::thread_rng().gen_range(0, num_mc_questions);
@@ -128,11 +130,14 @@ fn main() {
                         .read_line(&mut input_curr)
                         .expect("Failed to read line");
                     input_curr = input_curr.trim().to_string().to_uppercase();
+                    if input_curr.contains("EXIT") {
+                        break;
+                    }
                     if input_curr == characters[correct_answer_num] {
-                        println!("Correct!");
+                        println!("{}) is correct!", characters[correct_answer_num]);
                     } else {
                         println!(
-                            "Wrong! The Correct one is {})",
+                            "Wrong! The right one is {})",
                             characters[correct_answer_num]
                         );
                     }
