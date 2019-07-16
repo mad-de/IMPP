@@ -44,6 +44,7 @@ fn main() {
         }
     } else {
         loop {
+            input_url = String::from("");
             println!(
             "You seem to be here for the first time. Please specify the URL of your spreadsheet:"
         );
