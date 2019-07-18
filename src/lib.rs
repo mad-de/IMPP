@@ -16,8 +16,8 @@ pub enum Error {
 }
 
 const APP_INFO: AppInfo = AppInfo {
-    name: "preferences",
-    author: "Rust language community",
+    name: "IMPP",
+    author: "mad-de & others",
 };
 
 pub static BEGIN_CHARS: &'static str = "<td class=\"s[1-9]{1}\">";
