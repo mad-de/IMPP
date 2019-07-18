@@ -171,3 +171,24 @@ break;
         }
     }
 }
+
+#[cfg(test)]
+mod database_tests {
+    use super::*;
+
+    mod check_database {
+        use super::*;
+
+        #[test]
+        fn known_database_check_positive() {
+            let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
+            assert!(check_database(database_url));
+        }
+        #[test]
+        fn known_database_result_num() {
+            let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
+    let raw_data_test = fetch_data(&database_url).unwrap();
+assert!(extract_from_raw_data(raw_data_test).len() == 10);
+        }
+    }
+}
