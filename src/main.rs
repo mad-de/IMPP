@@ -7,6 +7,7 @@ const APP_INFO: AppInfo = AppInfo {
     name: "preferences",
     author: "Rust language community",
 };
+pub static PREF_KEY_ADDR: &'static str = "preferences/apps/impp20";
 
 mod lib;
 
@@ -31,71 +32,83 @@ fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
     Ok(string_array.to_vec())
 }
 
-fn main() {
-    let mut input_url = String::new();
-    let prefs_key = "preferences/apps/impp";
-    let load_preferences = PreferencesMap::<String>::load(&APP_INFO, prefs_key);
-    if load_preferences.is_ok() {
-        let preferences_index = "primary_db";
-        for (index, string) in load_preferences.unwrap() {
-            if index == "primary_db" {
-                input_url = string;
-            };
+pub fn return_pref_key(input_2: &str) -> String {
+    let mut input_3 = String::from("");
+    let load_preferences_2 = PreferencesMap::<String>::load(&APP_INFO, PREF_KEY_ADDR);
+    if load_preferences_2.is_ok() {
+        for (index, string) in load_preferences_2.unwrap() {
+            if index == input_2 {
+                input_3 = String::from(string);
+            }
         }
+    }
+    return input_3;
+}
+
+pub fn insert_pref_key(pref_key: &str, string: &str) -> bool {
+    let mut insert_preferences: PreferencesMap<String> = PreferencesMap::new();
+    insert_preferences.insert(pref_key.into(), string.into());
+    let save_result = insert_preferences.save(&APP_INFO, PREF_KEY_ADDR);
+    assert!(save_result.is_ok());
+    return true;
+}
+
+pub fn get_input(message: &str) -> String {
+    if !(message == "") {
+println!("{}", message);}
+    let mut this_input = String::from("");
+    io::stdin()
+        .read_line(&mut this_input)
+        .expect("Failed to read line");
+    return this_input.trim().to_string();
+}
+
+pub fn check_database(database_url: &str) -> bool {
+    println!("Loading your database...");
+
+    let raw_data = fetch_data(&database_url).unwrap();
+    let questions_db = extract_from_raw_data(raw_data);
+    if questions_db.len() == 0 {
+        return false;
     } else {
-        loop {
-            input_url = String::from("");
-            println!(
-            "You seem to be here for the first time. Please specify the URL of your spreadsheet:"
-        );
-            io::stdin()
-                .read_line(&mut input_url)
-                .expect("Failed to read line");
+        return true;
+    }
+}
 
-            input_url = input_url.trim().to_string();
-
-            println!("Loading your database...");
-
-            let init_raw_data = fetch_data(&input_url).unwrap();
-            let init_questions_db = extract_from_raw_data(init_raw_data);
-
-            if init_questions_db.len() == 0 {
-                println!("Your database seems to be empty. Are you sure you want to continue? y/n");
-                input_url = String::new();
-                io::stdin()
-                    .read_line(&mut input_url)
-                    .expect("Failed to read line");
-
-                input_url = input_url.trim().to_string();
-                if input_url == "y" {
-                    break;
-                }
-            } else {
+fn get_new_spreadsheet_url() -> String {
+    let mut spreadsheet_url: String;
+    loop {
+        spreadsheet_url = get_input("Please specify the URL of your spreadsheet:");
+        if check_database(&spreadsheet_url) {
+            insert_pref_key("primary_db", &spreadsheet_url);
+            break;
+        } else {
+            let check_input = get_input(
+                "Your database seems to be empty. Are you sure you want to continue? y/n",
+            );
+            if check_input.contains("y") {
+                insert_pref_key("primary_db", &spreadsheet_url);
                 break;
             }
         }
-
-        // Edit the preferences (std::collections::HashMap)
-        let mut insert_preferences: PreferencesMap<String> = PreferencesMap::new();
-        let input_url_2 = &input_url;
-        insert_preferences.insert("primary_db".into(), input_url_2.into());
-        let save_result = insert_preferences.save(&APP_INFO, prefs_key);
-        assert!(save_result.is_ok());
+    }
+    return spreadsheet_url;
+}
+fn main() {
+    let mut spreadsheet_url = return_pref_key("primary_db"); // load our spreasheet url
+    if spreadsheet_url.is_empty() {
+        println!("You seem to be here for the first time.");
+        spreadsheet_url = get_new_spreadsheet_url();
     }
 
-    let raw_data = fetch_data(&input_url).unwrap();
+    let raw_data = fetch_data(&spreadsheet_url).unwrap();
     let questions_db = extract_from_raw_data(raw_data);
 
     // START LOOP
     loop {
         print_welcome_msg(questions_db.len());
-        let mut input_root = String::new();
         let mut input_curr = String::new();
-        io::stdin()
-            .read_line(&mut input_root)
-            .expect("Failed to read line");
-
-        input_root = input_root.trim().to_string();
+        let input_root = get_input("");
         if input_root.contains("quit") {
             break;
         } else if input_root.contains("db") {
@@ -140,11 +153,7 @@ fn main() {
                     println!("Frage: \'{}\' \n", this_question);
                 } else {
                     println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", this_question);
-                    input_curr = String::from("");
-                    io::stdin()
-                        .read_line(&mut input_curr)
-                        .expect("Failed to read line");
-                    input_curr = input_curr.trim().to_string();
+        input_curr = get_input("");
                 }
                 if input_root.contains("-a") || input_curr.contains("m") {
                     correct_answer_num = rand::thread_rng().gen_range(0, num_mc_questions);
@@ -175,11 +184,7 @@ fn main() {
                         }
                         num_mc += 1;
                     }
-                    input_curr = String::from("");
-                    io::stdin()
-                        .read_line(&mut input_curr)
-                        .expect("Failed to read line");
-                    input_curr = input_curr.trim().to_string().to_uppercase();
+                    input_curr = get_input("").to_string().to_uppercase();
                     if input_curr == characters[correct_answer_num] {
                         println!("{}) is correct!", characters[correct_answer_num]);
                     } else {

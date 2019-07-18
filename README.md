@@ -2,7 +2,7 @@
 
 Idiotische Multiple-choice Prüfungsfragen Programm
 
-## Install
+## Install & run
 
 Install [git](https://git-scm.com) (see [here how to install git](https://www.linode.com/docs/development/version-control/how-to-install-git-on-linux-mac-and-windows/))
 and [Rust](https://rustup.rs/).
