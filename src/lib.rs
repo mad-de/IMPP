@@ -24,7 +24,7 @@ pub static BEGIN_CHARS: &'static str = "<td class=\"s[1-9]{1}\">";
 pub static BEGIN_ALT_CHARS: &'static str = "<td class=\"s[1-9]{1} softmerge\">";
 pub static BEGIN_ALT_EXTRA_CHARS: &'static str =
     r#"<div class="softmerge-inner" style="width: 512px; left: -1px;">"#;
-pub static PREF_KEY_ADDR: &'static str = "preferences/apps/impp20";
+pub static PREF_KEY_ADDR: &'static str = "preferences/apps/impp";
 
 pub fn return_pref_key(pref_key: &str) -> String {
     let mut spreadsheet_url = String::from("");
