@@ -1,4 +1,6 @@
 use regex::Regex;
+use preferences::{AppInfo, Preferences, PreferencesMap};
+use std::io;
 
 #[derive(Debug)]
 pub struct Question {
@@ -13,10 +15,47 @@ pub enum Error {
     Input,
 }
 
+const APP_INFO: AppInfo = AppInfo {
+    name: "IMPP",
+    author: "mad-de & others",
+};
+
 pub static BEGIN_CHARS: &'static str = "<td class=\"s[1-9]{1}\">";
 pub static BEGIN_ALT_CHARS: &'static str = "<td class=\"s[1-9]{1} softmerge\">";
 pub static BEGIN_ALT_EXTRA_CHARS: &'static str =
     r#"<div class="softmerge-inner" style="width: 512px; left: -1px;">"#;
+pub static PREF_KEY_ADDR: &'static str = "preferences/apps/impp";
+
+pub fn return_pref_key(pref_key: &str) -> String {
+    let mut spreadsheet_url = String::from("");
+    let load_preferences = PreferencesMap::<String>::load(&APP_INFO, PREF_KEY_ADDR);
+    if load_preferences.is_ok() {
+        for (index, string) in load_preferences.unwrap() {
+            if index == pref_key {
+                spreadsheet_url = String::from(string);
+            }
+        }
+    }
+    return spreadsheet_url;
+}
+
+pub fn insert_pref_key(pref_key: &str, string: &str) -> bool {
+    let mut insert_preferences: PreferencesMap<String> = PreferencesMap::new();
+    insert_preferences.insert(pref_key.into(), string.into());
+    let save_result = insert_preferences.save(&APP_INFO, PREF_KEY_ADDR);
+    assert!(save_result.is_ok());
+    return true;
+}
+
+pub fn get_input(message: &str) -> String {
+    if !(message == "") {
+println!("{}", message);}
+    let mut this_input = String::from("");
+    io::stdin()
+        .read_line(&mut this_input)
+        .expect("Failed to read line");
+    return this_input.trim().to_string();
+}
 
 pub fn extract_field_value(string_array: &mut [String]) -> Result<(), Error> {
     if string_array.is_empty() {
@@ -110,6 +149,8 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
 
     questions_db
 }
+
+
 
 #[cfg(test)]
 mod tests {

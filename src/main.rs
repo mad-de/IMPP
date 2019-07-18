@@ -1,12 +1,5 @@
 use self::lib::*;
-use preferences::{AppInfo, Preferences, PreferencesMap};
 use rand::Rng;
-use std::io;
-
-const APP_INFO: AppInfo = AppInfo {
-    name: "preferences",
-    author: "Rust language community",
-};
 
 mod lib;
 
@@ -19,6 +12,7 @@ fn print_welcome_msg(number_of_questions: usize) {
 > To play a game of normal single-choice questions type 'mc' or 'mc -n'
 |- For a game of automatic single-choice questions add '-a' (eg. 'mc -a')
 |- For a reversed (Jeopardy-Style) game add '-a' (eg. 'mc -a -j')
+> To edit your database url type 'ed'
 > To go back to this menu type 'exit', to quit the program type 'quit'
 We have {} items in our database."#,
         number_of_questions
@@ -27,75 +21,57 @@ We have {} items in our database."#,
 
 fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
     let body = ureq::get(url).call().into_string().unwrap();
-    let string_array: [String; 2] = [body, String::from("")]; // Initialize array
+    let string_array: [String; 2] = [body, String::from("")];
     Ok(string_array.to_vec())
 }
 
-fn main() {
-    let mut input_url = String::new();
-    let prefs_key = "preferences/apps/impp";
-    let load_preferences = PreferencesMap::<String>::load(&APP_INFO, prefs_key);
-    if load_preferences.is_ok() {
-        let preferences_index = "primary_db";
-        for (index, string) in load_preferences.unwrap() {
-            if index == "primary_db" {
-                input_url = string;
-            };
-        }
+fn check_database(database_url: &str) -> bool {
+    println!("Loading your database...");
+
+    let raw_data = fetch_data(&database_url).unwrap();
+    let questions_db = extract_from_raw_data(raw_data);
+    if questions_db.len() == 0 {
+        return false;
     } else {
-        loop {
-            input_url = String::from("");
-            println!(
-            "You seem to be here for the first time. Please specify the URL of your spreadsheet:"
-        );
-            io::stdin()
-                .read_line(&mut input_url)
-                .expect("Failed to read line");
+        return true;
+    }
+}
 
-            input_url = input_url.trim().to_string();
-
-            println!("Loading your database...");
-
-            let init_raw_data = fetch_data(&input_url).unwrap();
-            let init_questions_db = extract_from_raw_data(init_raw_data);
-
-            if init_questions_db.len() == 0 {
-                println!("Your database seems to be empty. Are you sure you want to continue? y/n");
-                input_url = String::new();
-                io::stdin()
-                    .read_line(&mut input_url)
-                    .expect("Failed to read line");
-
-                input_url = input_url.trim().to_string();
-                if input_url == "y" {
-                    break;
-                }
-            } else {
+fn get_new_spreadsheet_url() -> String {
+    let mut spreadsheet_url: String;
+    loop {
+        spreadsheet_url = get_input("Please specify the URL of your spreadsheet:");
+        if check_database(&spreadsheet_url) {
+            insert_pref_key("primary_db", &spreadsheet_url);
+            break;
+        } else {
+            let check_input = get_input(
+                "Your database seems to be empty. Are you sure you want to continue? y/n",
+            );
+            if check_input.contains("y") {
+                insert_pref_key("primary_db", &spreadsheet_url);
                 break;
             }
         }
+    }
+    return spreadsheet_url;
+}
 
-        // Edit the preferences (std::collections::HashMap)
-        let mut insert_preferences: PreferencesMap<String> = PreferencesMap::new();
-        let input_url_2 = &input_url;
-        insert_preferences.insert("primary_db".into(), input_url_2.into());
-        let save_result = insert_preferences.save(&APP_INFO, prefs_key);
-        assert!(save_result.is_ok());
+fn main() {
+    let mut spreadsheet_url = return_pref_key("primary_db"); // load our spreasheet url
+    if spreadsheet_url.is_empty() {
+        println!("You seem to be here for the first time.");
+        spreadsheet_url = get_new_spreadsheet_url();
     }
 
-    let raw_data = fetch_data(&input_url).unwrap();
+    let raw_data = fetch_data(&spreadsheet_url).unwrap();
     let questions_db = extract_from_raw_data(raw_data);
 
     // START LOOP
     loop {
         print_welcome_msg(questions_db.len());
-        let mut input_root = String::new();
         let mut input_curr = String::new();
-        io::stdin()
-            .read_line(&mut input_root)
-            .expect("Failed to read line");
-
-        input_root = input_root.trim().to_string();
+        let input_root = get_input("");
         if input_root.contains("quit") {
             break;
         } else if input_root.contains("db") {
@@ -104,7 +80,10 @@ fn main() {
                     "Frage: \'{}\', Antwort: \'{}\', Kategorie: \'{}\', Extra: \'{}\'",
                     item.question, item.answer, item.category, item.extra
                 );
-            }
+            } } else if input_root.contains("ed") {
+             get_new_spreadsheet_url();
+        println!("Database changed, please start program again.");
+break;
         } else if input_root.contains("mc") {
             loop {
                 println!("------------------------------------------------------------------------------------------------------");
@@ -140,11 +119,7 @@ fn main() {
                     println!("Frage: \'{}\' \n", this_question);
                 } else {
                     println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", this_question);
-                    input_curr = String::from("");
-                    io::stdin()
-                        .read_line(&mut input_curr)
-                        .expect("Failed to read line");
-                    input_curr = input_curr.trim().to_string();
+        input_curr = get_input("");
                 }
                 if input_root.contains("-a") || input_curr.contains("m") {
                     correct_answer_num = rand::thread_rng().gen_range(0, num_mc_questions);
@@ -175,11 +150,7 @@ fn main() {
                         }
                         num_mc += 1;
                     }
-                    input_curr = String::from("");
-                    io::stdin()
-                        .read_line(&mut input_curr)
-                        .expect("Failed to read line");
-                    input_curr = input_curr.trim().to_string().to_uppercase();
+                    input_curr = get_input("").to_string().to_uppercase();
                     if input_curr == characters[correct_answer_num] {
                         println!("{}) is correct!", characters[correct_answer_num]);
                     } else {
@@ -197,6 +168,27 @@ fn main() {
                     break;
                 }
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod database_tests {
+    use super::*;
+
+    mod check_database {
+        use super::*;
+
+        #[test]
+        fn known_database_check_positive() {
+            let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
+            assert!(check_database(database_url));
+        }
+        #[test]
+        fn known_database_result_num() {
+            let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
+    let raw_data_test = fetch_data(&database_url).unwrap();
+assert!(extract_from_raw_data(raw_data_test).len() == 10);
         }
     }
 }
