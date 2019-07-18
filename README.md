@@ -16,3 +16,6 @@ In terminal run:
 ## Run tests
 
     cargo test
+
+## Samples
+[Sample table](https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit?usp=drivesdk)
