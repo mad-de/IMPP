@@ -1,13 +1,5 @@
 use self::lib::*;
-use preferences::{AppInfo, Preferences, PreferencesMap};
 use rand::Rng;
-use std::io;
-
-const APP_INFO: AppInfo = AppInfo {
-    name: "preferences",
-    author: "Rust language community",
-};
-pub static PREF_KEY_ADDR: &'static str = "preferences/apps/impp20";
 
 mod lib;
 
@@ -20,6 +12,7 @@ fn print_welcome_msg(number_of_questions: usize) {
 > To play a game of normal single-choice questions type 'mc' or 'mc -n'
 |- For a game of automatic single-choice questions add '-a' (eg. 'mc -a')
 |- For a reversed (Jeopardy-Style) game add '-a' (eg. 'mc -a -j')
+> To edit your database url type 'ed'
 > To go back to this menu type 'exit', to quit the program type 'quit'
 We have {} items in our database."#,
         number_of_questions
@@ -28,42 +21,11 @@ We have {} items in our database."#,
 
 fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
     let body = ureq::get(url).call().into_string().unwrap();
-    let string_array: [String; 2] = [body, String::from("")]; // Initialize array
+    let string_array: [String; 2] = [body, String::from("")];
     Ok(string_array.to_vec())
 }
 
-pub fn return_pref_key(input_2: &str) -> String {
-    let mut input_3 = String::from("");
-    let load_preferences_2 = PreferencesMap::<String>::load(&APP_INFO, PREF_KEY_ADDR);
-    if load_preferences_2.is_ok() {
-        for (index, string) in load_preferences_2.unwrap() {
-            if index == input_2 {
-                input_3 = String::from(string);
-            }
-        }
-    }
-    return input_3;
-}
-
-pub fn insert_pref_key(pref_key: &str, string: &str) -> bool {
-    let mut insert_preferences: PreferencesMap<String> = PreferencesMap::new();
-    insert_preferences.insert(pref_key.into(), string.into());
-    let save_result = insert_preferences.save(&APP_INFO, PREF_KEY_ADDR);
-    assert!(save_result.is_ok());
-    return true;
-}
-
-pub fn get_input(message: &str) -> String {
-    if !(message == "") {
-println!("{}", message);}
-    let mut this_input = String::from("");
-    io::stdin()
-        .read_line(&mut this_input)
-        .expect("Failed to read line");
-    return this_input.trim().to_string();
-}
-
-pub fn check_database(database_url: &str) -> bool {
+fn check_database(database_url: &str) -> bool {
     println!("Loading your database...");
 
     let raw_data = fetch_data(&database_url).unwrap();
@@ -94,6 +56,7 @@ fn get_new_spreadsheet_url() -> String {
     }
     return spreadsheet_url;
 }
+
 fn main() {
     let mut spreadsheet_url = return_pref_key("primary_db"); // load our spreasheet url
     if spreadsheet_url.is_empty() {
@@ -117,7 +80,10 @@ fn main() {
                     "Frage: \'{}\', Antwort: \'{}\', Kategorie: \'{}\', Extra: \'{}\'",
                     item.question, item.answer, item.category, item.extra
                 );
-            }
+            } } else if input_root.contains("ed") {
+             get_new_spreadsheet_url();
+        println!("Database changed, please start program again.");
+break;
         } else if input_root.contains("mc") {
             loop {
                 println!("------------------------------------------------------------------------------------------------------");
