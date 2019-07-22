@@ -1,5 +1,5 @@
-use regex::Regex;
 use preferences::{AppInfo, Preferences, PreferencesMap};
+use regex::Regex;
 use std::io;
 
 #[derive(Debug)]
@@ -49,7 +49,8 @@ pub fn insert_pref_key(pref_key: &str, string: &str) -> bool {
 
 pub fn get_input(message: &str) -> String {
     if !(message == "") {
-println!("{}", message);}
+        println!("{}", message);
+    }
     let mut this_input = String::from("");
     io::stdin()
         .read_line(&mut this_input)
@@ -149,8 +150,6 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
 
     questions_db
 }
-
-
 
 #[cfg(test)]
 mod tests {
