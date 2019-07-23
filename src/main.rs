@@ -1,6 +1,6 @@
 use self::lib::*;
-use rand::Rng;
 use regex::Regex;
+use std::io;
 
 mod lib;
 
@@ -19,24 +19,6 @@ fn print_welcome_msg(number_of_questions: usize) {
 We have {} items in our database."#,
         number_of_questions
     );
-}
-
-fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
-    let body = ureq::get(url).call().into_string().unwrap();
-    let string_array: [String; 2] = [body, String::from("")];
-    Ok(string_array.to_vec())
-}
-
-fn check_database(database_url: &str) -> bool {
-    println!("Loading your database...");
-
-    let raw_data = fetch_data(&database_url).unwrap();
-    let questions_db = extract_from_raw_data(raw_data);
-    if questions_db.len() == 0 {
-        return false;
-    } else {
-        return true;
-    }
 }
 
 fn get_new_spreadsheet_url() -> String {
@@ -59,103 +41,25 @@ fn get_new_spreadsheet_url() -> String {
     return spreadsheet_url;
 }
 
+fn get_input(message: &str) -> String {
+    if !(message == "") {
+        println!("{}", message);
+    }
+    let mut this_input = String::from("");
+    io::stdin()
+        .read_line(&mut this_input)
+        .expect("Failed to read line");
+    return this_input.trim().to_string();
+}
+
 fn extract_topic(input_string: &str) -> &str {
     if Regex::new("-t \"(.*?)\"").unwrap().is_match(input_string) {
         let re = Regex::new("-t \"(.*?)\"").unwrap();
         let this_return = re.captures(input_string).unwrap();
         return this_return.get(1).unwrap().as_str();
     } else {
-        return ("");
+        return "";
     }
-}
-
-fn generate_random_question_number(questions_db: &Vec<Question>, topic: &str) -> usize // Todo: add weighting option https://rust-num.github.io/num/rand/distributions/struct.WeightedChoice.html | return a state if topic is not found
-{
-    let mut this_number = rand::thread_rng().gen_range(0, questions_db.len());
-    let mut i = 0;
-    let mut category_exists = false;
-    while i < questions_db.len() {
-        // does the topic even exist? TODO: can this be replaced with a contains() somehow?
-        if questions_db[i].category == topic {
-            category_exists = true;
-        }
-        i = i + 1;
-    }
-
-    if !(topic.is_empty()) && category_exists {
-        while (questions_db[this_number].category != topic) {
-            // check if our random number has the right category
-            this_number = rand::thread_rng().gen_range(0, questions_db.len());
-        }
-    }
-    return this_number;
-}
-
-fn generate_mc_questions(
-    questions_db: &Vec<Question>,
-    our_question_num: usize,
-    jeopardy_mode: bool,
-    num_mc_questions: usize,
-) -> Vec<Question> // Return a vector with x items with number 0 being the correct answer.
-{
-    // check how many answers of our category are in our vector
-    let mut this_num_mc = num_mc_questions;
-    let mut i = 0;
-    let mut count_category_items = 0;
-    let mut temp_question_num = rand::thread_rng().gen_range(0, questions_db.len());
-    while (i < questions_db.len()) {
-        if questions_db[i].category == questions_db[our_question_num].category {
-            count_category_items = count_category_items + 1;
-        }
-        i = i + 1;
-    }
-
-    if count_category_items < num_mc_questions {
-        this_num_mc = count_category_items;
-    }
-
-    let mut new_questions_db = vec![];
-
-    // Push our correct question as question [0]
-    if !(jeopardy_mode) {
-        let question0 = Question {
-            question: String::from(&questions_db[our_question_num].question),
-            answer: String::from(&questions_db[our_question_num].answer),
-            category: String::from(&questions_db[our_question_num].category),
-            extra: String::from(&questions_db[our_question_num].extra),
-        };
-        new_questions_db.push(question0);
-    } else {
-        let question0 = Question {
-            question: String::from(&questions_db[our_question_num].answer),
-            answer: String::from(&questions_db[our_question_num].question),
-            category: String::from(&questions_db[our_question_num].category),
-            extra: String::from(&questions_db[our_question_num].extra),
-        };
-        new_questions_db.push(question0);
-    }
-
-    let mut curr_questions = vec![];
-curr_questions.push(String::from(&questions_db[our_question_num].question));
-    i = 1;
-    while (i < this_num_mc) {
-            if !(curr_questions.contains(&questions_db[temp_question_num].question))
-                && &questions_db[temp_question_num].category
-                    == &questions_db[our_question_num].category
-            {
-                let question1 = Question {
-                    question: String::from(&questions_db[temp_question_num].question),
-                    answer: String::from(&questions_db[temp_question_num].answer),
-                    category: String::from(&questions_db[temp_question_num].category),
-                    extra: String::from(&questions_db[temp_question_num].extra),
-                };
-                new_questions_db.push(question1);
-                curr_questions.push(String::from(&questions_db[temp_question_num].question));
-            i = i + 1;
-            }
-            temp_question_num = rand::thread_rng().gen_range(0, questions_db.len());
-    }
-    return new_questions_db;
 }
 
 fn main() {
@@ -191,18 +95,17 @@ fn main() {
                 let num_mc_questions = 5;
                 let question_num =
                     generate_random_question_number(&questions_db, extract_topic(&input_root));
-                let mc_questions_vec = generate_mc_questions(
+                let mut mc_questions_vec = generate_mc_questions(
                     &questions_db,
                     question_num,
                     input_root.contains("-j"),
                     num_mc_questions,
                 );
-                let correct_answer_num: usize;
-                let mut num_mc = 0;
-                let mut temp_question_num: usize;
+                mc_questions_vec = order_vec_by_rand(mc_questions_vec);
                 let mut this_question: String;
                 let mut this_answer: String;
-                let mut this_gen_answer;
+                // let mut this_gen_answer;
+
                 let characters: [String; 10] = [
                     String::from("A"),
                     String::from("B"),
@@ -215,6 +118,7 @@ fn main() {
                     String::from("I"),
                     String::from("J"),
                 ];
+
                 // Switch answer and question in jeopardy-mode
                 if input_root.contains("-j") {
                     this_question = String::from(&questions_db[question_num].answer);
@@ -229,49 +133,34 @@ fn main() {
                     println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", this_question);
                     input_curr = get_input("");
                 }
-                if input_root.contains("-a") || input_curr.contains("m") {
-                    correct_answer_num = rand::thread_rng().gen_range(0, num_mc_questions);
-                    // Generate answers
-                    while num_mc < num_mc_questions {
-                        if num_mc == correct_answer_num {
-                            println!("{}) {}", characters[num_mc], this_answer);
-                        } else {
-                            temp_question_num = question_num; // Set temporary question to current question so the while has to fail initially
-                            while &questions_db[temp_question_num].question
-                                == &questions_db[question_num].question
-                                || &questions_db[temp_question_num].category
-                                    != &questions_db[question_num].category
-                            {
-                                temp_question_num =
-                                    rand::thread_rng().gen_range(0, questions_db.len());
-                            }
-
-                            if input_root.contains("-j") {
-                                this_gen_answer =
-                                    String::from(&questions_db[temp_question_num].question);
-                            } else {
-                                this_gen_answer =
-                                    String::from(&questions_db[temp_question_num].answer);
-                            }
-
-                            println!("{}) {}", characters[num_mc], this_gen_answer);
-                        }
-                        num_mc += 1;
+                if input_root.contains("-a") || input_curr.contains("m") && !(mc_questions_vec.len() == 1) {
+                    let mut f = 0;
+                    while f < mc_questions_vec.len() {
+                        println!("{}) {}", characters[f], mc_questions_vec[f].answer);
+                        f = f + 1;
                     }
                     input_curr = get_input("").to_string().to_uppercase();
-                    if input_curr == characters[correct_answer_num] {
-                        println!("{}) is correct!", characters[correct_answer_num]);
-                    } else {
-                        println!(
-                            "Wrong! The right one is {})",
-                            characters[correct_answer_num]
-                        );
+                    if characters.contains(&input_curr) {
+                        let index = characters
+                            .iter()
+                            .position(|r| r.to_string() == input_curr)
+                            .unwrap();
+                        if index < mc_questions_vec.len() {
+                            if this_question
+                                == mc_questions_vec[index].question
+                            {
+                                println!("{}) is correct!", input_curr);
+                            } else {
+                                println!("Wrong!");
+                            }
+                        }
                     }
                 }
                 println!("The correct answer is: {}", this_answer);
                 if &questions_db[question_num].extra != "" {
                     println!("Extra info: {}", &questions_db[question_num].extra);
                 }
+
                 if input_curr.to_uppercase().contains("EXIT") {
                     break;
                 }
@@ -284,7 +173,7 @@ fn main() {
 mod main_tests {
     use super::*;
 
-    mod check_string_functions {
+    mod return_by_topic {
         use super::*;
 
         #[test]
@@ -296,10 +185,6 @@ mod main_tests {
         fn extract_topic_empty_string() {
             assert!(extract_topic("-s \"fail this test\"").is_empty());
         }
-    }
-
-    mod check_generate_mc_functions {
-        use super::*;
 
         #[test]
         fn return_question_by_topic() {
@@ -314,7 +199,7 @@ mod main_tests {
         }
 
         #[test]
-        fn return_question_invalid_topic() {
+        fn return_question_for_invalid_topic() {
             let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
             let raw_data_test = fetch_data(&database_url).unwrap();
             let questions_db = extract_from_raw_data(raw_data_test);
@@ -323,38 +208,6 @@ mod main_tests {
                 extract_topic(&"-t \"wrong category\""),
             );
             assert!(!(questions_db[this_number].question.is_empty()));
-        }
-
-        #[test]
-        fn return_only_one_answer() {
-            let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
-            let raw_data_test = fetch_data(&database_url).unwrap();
-            let questions_db = extract_from_raw_data(raw_data_test);
-            assert!(generate_mc_questions(&questions_db, 9, false, 5).len() == 1);
-        }
-
-        #[test]
-        fn return_four_answers() {
-            let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
-            let raw_data_test = fetch_data(&database_url).unwrap();
-            let questions_db = extract_from_raw_data(raw_data_test);
-            assert!(generate_mc_questions(&questions_db, 6, false, 5).len() == 4);
-        }
-
-    }
-    mod check_database {
-        use super::*;
-
-        #[test]
-        fn known_database_check_positive() {
-            let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
-            assert!(check_database(database_url));
-        }
-        #[test]
-        fn known_database_result_num() {
-            let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
-            let raw_data_test = fetch_data(&database_url).unwrap();
-            assert!(extract_from_raw_data(raw_data_test).len() == 10);
         }
     }
 }
