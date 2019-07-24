@@ -63,12 +63,14 @@ fn extract_topic(input_string: &str) -> &str {
 }
 
 fn main() {
-    let mut spreadsheet_url = return_pref_key("primary_db"); // load our spreasheet url
+    // load our spreasheet url
+    let mut spreadsheet_url = return_pref_key("primary_db");
     if spreadsheet_url.is_empty() {
         println!("You seem to be here for the first time.");
         spreadsheet_url = get_new_spreadsheet_url();
     }
 
+    // Initialise database
     let raw_data = fetch_data(&spreadsheet_url).unwrap();
     let questions_db = extract_from_raw_data(raw_data);
     // START LOOP
@@ -91,21 +93,9 @@ fn main() {
             break;
         } else if input_root.contains("mc") {
             loop {
-                println!("------------------------------------------------------------------------------------------------------");
                 let num_mc_questions = 5;
-                let question_num =
-                    generate_random_question_number(&questions_db, extract_topic(&input_root));
-                let mut mc_questions_vec = generate_mc_questions(
-                    &questions_db,
-                    question_num,
-                    input_root.contains("-j"),
-                    num_mc_questions,
-                );
-                mc_questions_vec = order_vec_by_rand(mc_questions_vec);
                 let mut this_question: String;
                 let mut this_answer: String;
-                // let mut this_gen_answer;
-
                 let characters: [String; 10] = [
                     String::from("A"),
                     String::from("B"),
@@ -118,6 +108,17 @@ fn main() {
                     String::from("I"),
                     String::from("J"),
                 ];
+                let question_num =
+                    generate_random_question_number(&questions_db, extract_topic(&input_root));
+                let mut mc_questions_vec = generate_mc_questions(
+                    &questions_db,
+                    question_num,
+                    input_root.contains("-j"),
+                    num_mc_questions,
+                );
+                mc_questions_vec = order_vec_by_rand(mc_questions_vec);
+
+                println!("------------------------------------------------------------------------------------------------------");
 
                 // Switch answer and question in jeopardy-mode
                 if input_root.contains("-j") {
@@ -127,18 +128,23 @@ fn main() {
                     this_question = String::from(&questions_db[question_num].question);
                     this_answer = String::from(&questions_db[question_num].answer);
                 }
+		// Print question
                 if input_root.contains("-a") {
                     println!("Frage: \'{}\' \n", this_question);
                 } else {
                     println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", this_question);
                     input_curr = get_input("");
                 }
-                if input_root.contains("-a") || input_curr.contains("m") && !(mc_questions_vec.len() == 1) {
-                    let mut f = 0;
-                    while f < mc_questions_vec.len() {
-                        println!("{}) {}", characters[f], mc_questions_vec[f].answer);
-                        f = f + 1;
+                // print mc questions (only if more than one mc answer is avaliable)   
+                if input_root.contains("-a")
+                    || input_curr.contains("m") && !(mc_questions_vec.len() == 1)
+                {
+                    let mut i = 0;
+                    while i < mc_questions_vec.len() {
+                        println!("{}) {}", characters[i], mc_questions_vec[i].answer);
+                        i = i + 1;
                     }
+                    // Check answer input
                     input_curr = get_input("").to_string().to_uppercase();
                     if characters.contains(&input_curr) {
                         let index = characters
@@ -146,16 +152,15 @@ fn main() {
                             .position(|r| r.to_string() == input_curr)
                             .unwrap();
                         if index < mc_questions_vec.len() {
-                            if this_question
-                                == mc_questions_vec[index].question
-                            {
+                            if this_question == mc_questions_vec[index].question {
                                 println!("{}) is correct!", input_curr);
                             } else {
-                                println!("Wrong!");
+                                println!("{}) is wrong!", input_curr);
                             }
                         }
                     }
                 }
+                // Return correct answer
                 println!("The correct answer is: {}", this_answer);
                 if &questions_db[question_num].extra != "" {
                     println!("Extra info: {}", &questions_db[question_num].extra);
