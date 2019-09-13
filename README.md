@@ -23,29 +23,14 @@ In terminal run:
 ## Build library for Android
 Prepare toolchain (see eg [here](https://medium.com/visly/rust-on-android-19f34a2fb43))
 
-.cargo/config should look like
-
-    [target.aarch64-linux-android]
-    ar = "#DEIN NDK TOOLCHAIN FOLDER#/arm64/bin/aarch64-linux-android-ar"
-    linker = "#DEIN NDK TOOLCHAIN FOLDER#/arm64/bin/aarch64-linux-android29-clang"
-
-    [target.armv7-linux-androideabi]
-    ar = "#DEIN NDK TOOLCHAIN FOLDER#/NDK/arm/bin/arm-linux-androideabi-ar"
-    linker = "#DEIN NDK TOOLCHAIN FOLDER#/arm/bin/arm-linux-androideabi-clang"
-
-    [target.i686-linux-android]
-    ar = "#DEIN NDK TOOLCHAIN FOLDER#/x86/bin/i686-linux-android-ar"
-    linker = "#DEIN NDK TOOLCHAIN FOLDER#/x86/bin/i686-linux-android28-clang"
-
-    [target.aarch64-linux-android-gcc]
-    linker = "#DEIN NDK TOOLCHAIN FOLDER#/arm64/bin/aarch64-linux-android-gcc"
+Remember the NDK toolchain path you set in the .cargo/config - I will refer to them as %YOUR NDK FOLDER%
 
 In terminal execute:
 
     git clone https://github.com/mad-de/IMPP/
     cd IMPP
-    export CC=#DEIN NDK TOOLCHAIN FOLDER#/arm64/bin/aarch64-linux-android-clang
-    export AR=#DEIN NDK TOOLCHAIN FOLDER#/arm64/bin/aarch64-linux-android-ar
+    export CC=%YOUR NDK FOLDER%/arm64/bin/aarch64-linux-android-clang
+    export AR=%YOUR NDK FOLDER%/arm64/bin/aarch64-linux-android-ar
     cargo build --target aarch64-linux-android --release
     cargo build --target armv7-linux-androideabi --release
     cargo build --target i686-linux-android --release
