@@ -21,7 +21,7 @@ In terminal run:
 [Sample table](https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit?usp=drivesdk)
 
 ## Build library for Android
-Prepare toolchain
+Prepare toolchain (see eg [here](https://medium.com/visly/rust-on-android-19f34a2fb43))
 
 .cargo/config should look like
 
@@ -41,8 +41,11 @@ Prepare toolchain
     linker = "#DEIN NDK TOOLCHAIN FOLDER#/arm64/bin/aarch64-linux-android-gcc"
 
 In terminal execute:
-> git clone https://github.com/mad-de/IMPP/
-> cd IMPP
-> export CC=#DEIN NDK TOOLCHAIN FOLDER#/arm64/bin/aarch64-linux-android-clang
-> export AR=#DEIN NDK TOOLCHAIN FOLDER#/arm64/bin/aarch64-linux-android-ar
-> cargo build --target aarch64-linux-android --release
+
+    git clone https://github.com/mad-de/IMPP/
+    cd IMPP
+    export CC=#DEIN NDK TOOLCHAIN FOLDER#/arm64/bin/aarch64-linux-android-clang
+    export AR=#DEIN NDK TOOLCHAIN FOLDER#/arm64/bin/aarch64-linux-android-ar
+    cargo build --target aarch64-linux-android --release
+    cargo build --target armv7-linux-androideabi --release
+    cargo build --target i686-linux-android --release
