@@ -27,10 +27,8 @@ Remember the NDK toolchain path you set in the .cargo/config - I will refer to t
 
 In terminal execute:
 
-    git clone https://github.com/mad-de/IMPP/
+    git clone -b temp-macOS-fix https://github.com/mad-de/IMPP/
     cd IMPP
-    export CC=%YOUR NDK FOLDER%/arm64/bin/aarch64-linux-android-clang
-    export AR=%YOUR NDK FOLDER%/arm64/bin/aarch64-linux-android-ar
     cargo build --target aarch64-linux-android --release
     cargo build --target armv7-linux-androideabi --release
     cargo build --target i686-linux-android --release
