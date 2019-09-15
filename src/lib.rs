@@ -1,7 +1,10 @@
 use preferences::{AppInfo, Preferences, PreferencesMap};
 use rand::Rng;
 use regex::Regex;
-use webpage::{Webpage, WebpageOptions};
+//use webpage::{Webpage, WebpageOptions};
+// WORKAROUND for MacOS
+use std::fs::File;
+use std::io::Read;
 
 #[derive(Debug)]
 pub struct Question {
@@ -136,9 +139,18 @@ pub fn order_vec_by_rand(mut questions_db: Vec<Question>) -> Vec<Question> {
     return questions_db;
 }
 
-pub fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
-    let body = Webpage::from_url(url, WebpageOptions::default()).expect("Could not read from URL").http.body;
-    let string_array: [String; 2] = [body.to_string(), String::from("")];
+//pub fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
+pub fn fetch_data(mut url: &str) -> Result<Vec<String>, ()> {
+    //    let body = Webpage::from_url(url, WebpageOptions::default()).expect("Could not read from URL").http.body;
+    if url == "" {} // fix warning remove later.
+    // path: src/vokabelliste.txt OR src/sample_table.txt
+    url = "src/vokabelliste.txt";
+    let mut file = File::open(url).expect("Unable to open");
+    let mut body = String::new();
+    file.read_to_string(&mut body).expect("Could not read file");
+    //println!("{}", &body);
+    let string_array: [String; 2] = [body, String::from("")];
+    //    let string_array: [String; 2] = [body.to_string(), String::from("")];
     Ok(string_array.to_vec())
 }
 
@@ -219,7 +231,6 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
     let mut this_category: String;
     let mut this_extra: String;
     let mut questions_db = vec![];
-
     while Regex::new(BEGIN_CHARS).unwrap().is_match(&string_array[0]) {
         let mut initial = true;
         while (string_array[1] == "" || string_array[1] == "EOL" || initial == true)

@@ -128,14 +128,14 @@ fn main() {
                     this_question = String::from(&questions_db[question_num].question);
                     this_answer = String::from(&questions_db[question_num].answer);
                 }
-		// Print question
+                // Print question
                 if input_root.contains("-a") {
                     println!("Frage: \'{}\' \n", this_question);
                 } else {
                     println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", this_question);
                     input_curr = get_input("");
                 }
-                // print mc questions (only if more than one mc answer is avaliable)   
+                // print mc questions (only if more than one mc answer is avaliable)
                 if input_root.contains("-a")
                     || input_curr.contains("m") && !(mc_questions_vec.len() == 1)
                 {

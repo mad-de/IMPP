@@ -5,8 +5,8 @@ authors = ["mad-de"]
 edition = "2018"
 
 [dependencies]
-webpage = "1"
+# webpage = "1"
 rand = "0.7"
 regex = "1"
 preferences = "1.1"
-openssl = { version = "0.10", features = ["vendored"] }
+# openssl = { version = "0.10", features = ["vendored"] }
