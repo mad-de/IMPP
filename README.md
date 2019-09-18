@@ -19,18 +19,3 @@ In terminal run:
 
 ## Samples
 [Sample table](https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit?usp=drivesdk)
-
-## Build library for Android
-Prepare toolchain (see eg [here](https://medium.com/visly/rust-on-android-19f34a2fb43))
-
-Remember the NDK toolchain path you set in the .cargo/config - I will refer to them as %YOUR NDK FOLDER%
-
-In terminal execute:
-
-    git clone https://github.com/mad-de/IMPP/
-    cd IMPP
-    export CC=%YOUR NDK FOLDER%/arm64/bin/aarch64-linux-android-clang
-    export AR=%YOUR NDK FOLDER%/arm64/bin/aarch64-linux-android-ar
-    cargo build --target aarch64-linux-android --release
-    cargo build --target armv7-linux-androideabi --release
-    cargo build --target i686-linux-android --release

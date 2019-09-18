@@ -1,7 +1,6 @@
 use preferences::{AppInfo, Preferences, PreferencesMap};
 use rand::Rng;
 use regex::Regex;
-use webpage::{Webpage, WebpageOptions};
 
 #[derive(Debug)]
 pub struct Question {
@@ -137,8 +136,8 @@ pub fn order_vec_by_rand(mut questions_db: Vec<Question>) -> Vec<Question> {
 }
 
 pub fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
-    let body = Webpage::from_url(url, WebpageOptions::default()).expect("Could not read from URL").http.body;
-    let string_array: [String; 2] = [body.to_string(), String::from("")];
+    let body = ureq::get(url).call().into_string().unwrap();
+    let string_array: [String; 2] = [body, String::from("")];
     Ok(string_array.to_vec())
 }
 
