@@ -25,11 +25,11 @@ Prepare toolchain (see eg [here](https://medium.com/visly/rust-on-android-19f34a
 
 Remember the NDK toolchain path you set in the .cargo/config - I will refer to them as %YOUR NDK FOLDER%
 
-In terminal execute:
+In terminal execute (android-clang might need a version suffix eg (aarch64-linux-android29-clang):
 
     git clone https://github.com/mad-de/IMPP/
     cd IMPP
-    export CC=%YOUR NDK FOLDER%/arm64/bin/aarch64-linux-android-clang
+    export TARGET_CC=%YOUR NDK FOLDER%/arm64/bin/aarch64-linux-android-clang
     export AR=%YOUR NDK FOLDER%/arm64/bin/aarch64-linux-android-ar
     cargo build --target aarch64-linux-android --release
     cargo build --target armv7-linux-androideabi --release
