@@ -32,33 +32,33 @@ fn get_new_spreadsheet_url() -> String {
             let check_input = get_input(
                 "Your database seems to be empty. Are you sure you want to continue? y/n",
             );
-            if check_input.contains("y") {
+            if check_input.contains('y') {
                 insert_pref_key("primary_db", &spreadsheet_url);
                 break;
             }
         }
     }
-    return spreadsheet_url;
+    spreadsheet_url
 }
 
 fn get_input(message: &str) -> String {
-    if !(message == "") {
+    if message != "" {
         println!("{}", message);
     }
     let mut this_input = String::from("");
     io::stdin()
         .read_line(&mut this_input)
         .expect("Failed to read line");
-    return this_input.trim().to_string();
+    this_input.trim().to_string()
 }
 
 fn extract_topic(input_string: &str) -> &str {
     if Regex::new("-t \"(.*?)\"").unwrap().is_match(input_string) {
         let re = Regex::new("-t \"(.*?)\"").unwrap();
         let this_return = re.captures(input_string).unwrap();
-        return this_return.get(1).unwrap().as_str();
+        this_return.get(1).unwrap().as_str()
     } else {
-        return "";
+        ""
     }
 }
 
@@ -94,8 +94,8 @@ fn main() {
         } else if input_root.contains("mc") {
             loop {
                 let num_mc_questions = 5;
-                let mut this_question: String;
-                let mut this_answer: String;
+                let this_question: String;
+                let this_answer: String;
                 let characters: [String; 10] = [
                     String::from("A"),
                     String::from("B"),
@@ -128,29 +128,26 @@ fn main() {
                     this_question = String::from(&questions_db[question_num].question);
                     this_answer = String::from(&questions_db[question_num].answer);
                 }
-		// Print question
+                // Print question
                 if input_root.contains("-a") {
                     println!("Frage: \'{}\' \n", this_question);
                 } else {
                     println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", this_question);
                     input_curr = get_input("");
                 }
-                // print mc questions (only if more than one mc answer is avaliable)   
+                // print mc questions (only if more than one mc answer is avaliable)
                 if input_root.contains("-a")
-                    || input_curr.contains("m") && !(mc_questions_vec.len() == 1)
+                    || input_curr.contains('m') && mc_questions_vec.len() != 1
                 {
                     let mut i = 0;
                     while i < mc_questions_vec.len() {
                         println!("{}) {}", characters[i], mc_questions_vec[i].answer);
-                        i = i + 1;
+                        i += 1;
                     }
                     // Check answer input
                     input_curr = get_input("").to_string().to_uppercase();
                     if characters.contains(&input_curr) {
-                        let index = characters
-                            .iter()
-                            .position(|r| r.to_string() == input_curr)
-                            .unwrap();
+                        let index = characters.iter().position(|r| *r == input_curr).unwrap();
                         if index < mc_questions_vec.len() {
                             if this_question == mc_questions_vec[index].question {
                                 println!("{}) is correct!", input_curr);
