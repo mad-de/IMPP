@@ -20,23 +20,23 @@ const APP_INFO: AppInfo = AppInfo {
     author: "mad-de & others",
 };
 
-pub static BEGIN_CHARS: &'static str = "<td class=\"s[1-9]{1}\">";
-pub static BEGIN_ALT_CHARS: &'static str = "<td class=\"s[1-9]{1} softmerge\">";
-pub static BEGIN_ALT_EXTRA_CHARS: &'static str =
+pub static BEGIN_CHARS: &str = "<td class=\"s[1-9]{1}\">";
+pub static BEGIN_ALT_CHARS: &str = "<td class=\"s[1-9]{1} softmerge\">";
+pub static BEGIN_ALT_EXTRA_CHARS: &str =
     r#"<div class="softmerge-inner" style="width: 512px; left: -1px;">"#;
-pub static PREF_KEY_ADDR: &'static str = "preferences/apps/impp";
+pub static PREF_KEY_ADDR: &str = "preferences/apps/impp";
 
 pub fn return_pref_key(pref_key: &str) -> String {
-    let mut spreadsheet_url = String::from("");
+    let mut spreadsheet_url = String::new();
     let load_preferences = PreferencesMap::<String>::load(&APP_INFO, PREF_KEY_ADDR);
-    if load_preferences.is_ok() {
-        for (index, string) in load_preferences.unwrap() {
+    if let Ok(load_preferences) = load_preferences {
+        for (index, string) in load_preferences {
             if index == pref_key {
-                spreadsheet_url = String::from(string);
+                spreadsheet_url = string;
             }
         }
     }
-    return spreadsheet_url;
+    spreadsheet_url
 }
 
 pub fn insert_pref_key(pref_key: &str, string: &str) -> bool {
@@ -44,11 +44,11 @@ pub fn insert_pref_key(pref_key: &str, string: &str) -> bool {
     insert_preferences.insert(pref_key.into(), string.into());
     let save_result = insert_preferences.save(&APP_INFO, PREF_KEY_ADDR);
     assert!(save_result.is_ok());
-    return true;
+    true
 }
 
 pub fn generate_mc_questions(
-    questions_db: &Vec<Question>,
+    questions_db: &[Question],
     our_question_num: usize,
     jeopardy_mode: bool,
     num_mc_questions: usize,
@@ -61,9 +61,9 @@ pub fn generate_mc_questions(
     let mut temp_question_num = rand::thread_rng().gen_range(0, questions_db.len());
     while i < questions_db.len() {
         if questions_db[i].category == questions_db[our_question_num].category {
-            count_category_items = count_category_items + 1;
+            count_category_items += 1;
         }
-        i = i + 1;
+        i += 1;
     }
 
     if count_category_items < num_mc_questions {
@@ -73,7 +73,7 @@ pub fn generate_mc_questions(
     let mut new_questions_db = vec![];
 
     // Push our correct question as question [0]
-    if !(jeopardy_mode) {
+    if !jeopardy_mode {
         let question0 = Question {
             question: String::from(&questions_db[our_question_num].question),
             answer: String::from(&questions_db[our_question_num].answer),
@@ -96,7 +96,7 @@ pub fn generate_mc_questions(
     i = 1;
     while i < this_num_mc {
         if !(curr_questions.contains(&questions_db[temp_question_num].question))
-            && &questions_db[temp_question_num].category == &questions_db[our_question_num].category
+            && questions_db[temp_question_num].category == questions_db[our_question_num].category
         {
             if !(jeopardy_mode) {
                 let question1 = Question {
@@ -116,11 +116,11 @@ pub fn generate_mc_questions(
                 new_questions_db.push(question1);
             }
             curr_questions.push(String::from(&questions_db[temp_question_num].question));
-            i = i + 1;
+            i += 1;
         }
         temp_question_num = rand::thread_rng().gen_range(0, questions_db.len());
     }
-    return new_questions_db;
+    new_questions_db
 }
 
 pub fn order_vec_by_rand(mut questions_db: Vec<Question>) -> Vec<Question> {
@@ -132,11 +132,13 @@ pub fn order_vec_by_rand(mut questions_db: Vec<Question>) -> Vec<Question> {
     if rand::thread_rng().gen_range(0, 10) > 5 {
         questions_db.reverse();
     }
-    return questions_db;
+    questions_db
 }
 
 pub fn fetch_data(url: &str) -> Result<Vec<String>, ()> {
-    let body = ureq::get(url).call().into_string().unwrap();
+    let body = ureq::get(url).call().into_string().map_err(|e| {
+        println!("ERROR: Could not fetch data: {}", e);
+    })?;
     let string_array: [String; 2] = [body, String::from("")];
     Ok(string_array.to_vec())
 }
@@ -146,11 +148,7 @@ pub fn check_database(database_url: &str) -> bool {
 
     let raw_data = fetch_data(&database_url).unwrap();
     let questions_db = extract_from_raw_data(raw_data);
-    if questions_db.len() == 0 {
-        return false;
-    } else {
-        return true;
-    }
+    !questions_db.is_empty()
 }
 
 pub fn extract_field_value(string_array: &mut [String]) -> Result<(), Error> {
@@ -190,7 +188,7 @@ pub fn extract_field_value(string_array: &mut [String]) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn generate_random_question_number(questions_db: &Vec<Question>, topic: &str) -> usize // Todo: add weighting option https://rust-num.github.io/num/rand/distributions/struct.WeightedChoice.html | return a state if topic is not found
+pub fn generate_random_question_number(questions_db: &[Question], topic: &str) -> usize // Todo: add weighting option https://rust-num.github.io/num/rand/distributions/struct.WeightedChoice.html | return a state if topic is not found
 {
     let mut this_number = rand::thread_rng().gen_range(0, questions_db.len());
     let mut i = 0;
@@ -200,16 +198,16 @@ pub fn generate_random_question_number(questions_db: &Vec<Question>, topic: &str
         if questions_db[i].category == topic {
             category_exists = true;
         }
-        i = i + 1;
+        i += 1;
     }
 
-    if !(topic.is_empty()) && category_exists {
+    if !topic.is_empty() && category_exists {
         while questions_db[this_number].category != topic {
             // check if our random number has the right category
             this_number = rand::thread_rng().gen_range(0, questions_db.len());
         }
     }
-    return this_number;
+    this_number
 }
 
 pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
@@ -221,7 +219,7 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
 
     while Regex::new(BEGIN_CHARS).unwrap().is_match(&string_array[0]) {
         let mut initial = true;
-        while (string_array[1] == "" || string_array[1] == "EOL" || initial == true)
+        while (string_array[1] == "" || string_array[1] == "EOL" || initial)
             && Regex::new(BEGIN_CHARS).unwrap().is_match(&string_array[0])
         {
             // search for the first normally formatted field
@@ -308,7 +306,6 @@ mod tests {
             let questions_db = extract_from_raw_data(raw_data_test);
             assert!(generate_mc_questions(&questions_db, 9, true, 5)[0].answer == "SHBG");
         }
-
     }
     mod check_database {
         use super::*;
@@ -326,4 +323,3 @@ mod tests {
         }
     }
 }
-
