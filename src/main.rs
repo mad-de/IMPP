@@ -2,7 +2,7 @@ use rand::Rng;
 use regex::Regex;
 use std::convert::TryFrom;
 use std::io;
-use std::time::{Instant};
+use std::time::Instant;
 use ureq;
 
 #[allow(dead_code)]
@@ -33,11 +33,20 @@ fn fetch_data(url: &str) -> String {
 fn get_new_spreadsheet_url() {
     let mut spreadsheet_url: String;
     spreadsheet_url = get_input("Please specify the URL of your spreadsheet:");
+    println!("Downloading database...");
     // TODO: Check Result
+    let httprequest = fetch_data(&spreadsheet_url);
     let now = Instant::now();
-    println!("Importing database");
-    let import_count = lib_impp::import_googlesheet(fetch_data(&spreadsheet_url), "");
-    println!("\nImported {} objects. Import took {} seconds.", import_count, now.elapsed().as_secs());
+    println!(
+        "Importing database from table \"{}\"",
+        lib_impp::return_title(httprequest.clone())
+    );
+    let import_count = lib_impp::import_googlesheet(httprequest, "");
+    println!(
+        "\nImported {} objects. Import took {} seconds.",
+        import_count,
+        now.elapsed().as_secs()
+    );
 }
 
 fn get_input(message: &str) -> String {
@@ -65,6 +74,7 @@ fn main() {
     // Check if we have a database file
     if !lib_impp::get_database_status("") == true {
         println!("You seem to be here for the first time.");
+        get_new_spreadsheet_url();
     }
 
     // START LOOP
@@ -74,11 +84,11 @@ fn main() {
         let input_root = get_input("");
         if input_root.contains("quit") {
             break;
-        }
-        else if input_root.contains("ed") {
+        } else if input_root.contains("ed") {
             get_new_spreadsheet_url();
         } else if input_root.contains("mc") {
             loop {
+                // Initialize set of characters for display
                 let characters: [String; 10] = [
                     String::from("A"),
                     String::from("B"),
@@ -91,16 +101,19 @@ fn main() {
                     String::from("I"),
                     String::from("J"),
                 ];
+                // generate a random question number
                 let question_num = lib_impp::generate_random_question(
                     String::from(extract_topic(&input_root)),
                     "",
                 );
+                // get details for our questions
                 let question_vector: Vec<lib_impp::Question> = lib_impp::get_question_vector(
                     &lib_impp::import_json_question_db(""),
                     input_root.contains("-j"),
                     usize::try_from(question_num)
                         .expect("Our question number could not be converted to usize."),
                 );
+                // Load distractors
                 let mc_distractors =
                     lib_impp::get_mc_distractors(question_num, 4, input_root.contains("-j"), "");
                 let our_distractors_length = mc_distractors.len();
@@ -118,11 +131,13 @@ fn main() {
                 if input_root.contains("-a")
                     || input_curr.contains('m') && our_distractors_length != 0
                 {
+                    // Generate random number in our set of MC questions
                     let our_rand_number =
                         rand::thread_rng().gen_range(0, our_distractors_length + 1);
                     let mut i = 0;
                     let mut j = 0;
                     while i < our_distractors_length + 1 {
+                        // insert our question / replace it when it is not our random number
                         let mut this_mc_answer = &question_vector[0].answer;
                         if i != our_rand_number {
                             this_mc_answer = &mc_distractors[j].answer;
@@ -137,6 +152,7 @@ fn main() {
                     if characters.contains(&input_curr) {
                         let index = characters.iter().position(|r| *r == input_curr).unwrap();
                         if index < our_distractors_length + 1 {
+                            // Reveal correct answer
                             if our_rand_number == index {
                                 print!("{} is correct! ", &input_curr);
                             } else {

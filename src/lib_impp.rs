@@ -201,8 +201,8 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
             } else {
                 questions_db.push(question1);
                 this_id = this_id + 1;
-// Only for Desktop version
-print!("\rImporting dataset #{}", this_id);
+                // Only for Desktop version
+                print!("\rImporting dataset #{}", this_id);
             }
         }
     }
@@ -383,10 +383,7 @@ mod module_tests {
 
         #[test]
         fn generate_random_question_number_for_category() {
-            assert!(
-                generate_random_question(String::from("Endocrinology"), "src/tests/")
-                    == 9
-            );
+            assert!(generate_random_question(String::from("Endocrinology"), "src/tests/") == 9);
         }
 
         #[test]
