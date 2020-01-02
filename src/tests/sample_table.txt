@@ -1,0 +1,131 @@
+<!DOCTYPE html><html><head><title>IMPP sample table</title><meta name="viewport" content="target-densitydpi=device-dpi,user-scalable=1,minimum-scale=1,maximum-scale=2.5,initial-scale=1,width=device-width"><link href='/static/spreadsheets2/client/css/3724498002-waffle_k_ltr.css' type='text/css' rel='stylesheet'><style type="text/css" nonce="5zRsS/sWVQdCN0kcDXBZIg">
+        html { overflow: visible; }
+        #sheets-viewport { overflow: auto; }
+        #sheets-viewport.widget-viewport { overflow: hidden; }
+        .grid-container { overflow: visible; background: white;}
+        .grid-table-container { overflow: visible; }
+        #top-bar {
+          background: url("//ssl.gstatic.com/docs/spreadsheets/publishheader.png") repeat-x bottom;
+          margin: 0;
+          overflow: hidden;
+        }
+        #top-bar {
+          border-bottom: 1px solid #ccc;
+          padding: 6px 6px 0;
+        }
+        #doc-title { padding-bottom: 5px; }
+        #doc-title .name { font-size: 15px; }
+        #sheet-menu {
+          font-size: 13px;
+          margin: 6px 0 0;
+          padding: 0 0 5px;
+        }
+        #sheet-menu li {
+          display: inline;
+          list-style-type: none;
+          margin: 0;
+          padding: 5px 8px;
+        }
+        #sheet-menu li.active {
+          background-color: #fff;
+          font-weight: bold;
+          border: 1px solid #999;
+        }
+        #top-bar #sheet-menu li.active {
+          border-bottom: 0;
+        }
+        #sheet-menu a, #sheet-menu a:visited { color: #07c; }
+        #footer {
+          background: #f0f0f0;
+          border-top: 1px #ccc solid;
+          border-bottom: 1px #ccc solid;
+          font-size: 13;
+          padding: 10px 10px;
+        }
+        .dash {
+          padding: 0 6px;
+        }
+        .ritz .waffle a { color: inherit; }.ritz .waffle .s0{background-color:#ffffff;text-align:left;font-weight:bold;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:bottom;white-space:nowrap;direction:ltr;padding:2px 3px 2px 3px;}.ritz .waffle .s1{background-color:#ffffff;text-align:left;color:#000000;font-family:'Arial';font-size:10pt;vertical-align:bottom;white-space:nowrap;direction:ltr;padding:2px 3px 2px 3px;}</style><script type="text/javascript" nonce="5zRsS/sWVQdCN0kcDXBZIg">
+        var activeSheetId;
+
+        function switchToSheet(id) {
+          if (document.getElementById('sheet-menu')) {
+            document.getElementById('sheet-button-' + activeSheetId)
+                .className = '';
+            document.getElementById('sheet-button-' + id).className = 'active';
+          }
+
+          document.getElementById(activeSheetId).style.display = 'none';
+          document.getElementById(id).style.display = '';
+          activeSheetId = id;
+
+          // posObjs() is defined in embeddedObjectJs (see EmbeddedObjectHtmlBuilder.java)
+          posObjs();
+          return false;
+        }
+        
+        function init() {
+        var optPageSwitcher;
+        
+        function resize() {
+          var optMobileWebHeader = document.getElementById('docs-ml-header-id');
+          var optTopBar = document.getElementById('top-bar');
+          var optFooter = document.getElementById('footer');
+          var sheetsViewport = document.getElementById('sheets-viewport');
+
+          if (optMobileWebHeader) {
+            sheetsViewport.style.marginTop = optMobileWebHeader.offsetHeight +
+                (optTopBar ? optTopBar.offsetHeight : 0) + 'px';
+          }
+          var adjustedHeight = window.innerHeight -
+              (optTopBar ? optTopBar.offsetHeight : 0) -
+              (optFooter ? optFooter.offsetHeight : 0);
+          var adjustedWidth = window.innerWidth;
+          sheetsViewport.style.width = (adjustedWidth + 'px');
+          sheetsViewport.style.height = (adjustedHeight + 'px');
+          if (optPageSwitcher) {
+            optPageSwitcher.resize(adjustedWidth, adjustedHeight);
+          }
+        }
+        resize();
+        window.onresize = resize;
+        }
+        </script><script nonce="5zRsS/sWVQdCN0kcDXBZIg">_docs_flag_initialData={"docs-mwid":true,"docs-smheo":true,"info_params":{"token":"AC4w5VhWOABmypu6ub1AkIlHeUOPSIigcg:1577013236144","includes_info_params":true},"ilcm":{"eui":"ADFN-cuWCbe9xj6WHZhbWi7tSZH4Tq4-oxl3yz_0yJwMfRQEJYzBZgC1HpB0u4MTgxhiQhCdnwyR","je":1,"sstu":1577013236146000,"si":"CPHC_I2QyeYCFatH1AodjFgERQ","gsc":1,"ei":[5701393,5702936,5704196,5702706,5703339,5704785,5706286,5706359,5704553,5704431,5706109,5702849,5703014,5700551,5703186,5709014,5703419,5700333,5708584,5703022,5706601,5703762,5706355,5701022,5705183,5706061,5701437,5702728,5700579,5702873,5701461,5701853,5704943,5706920,5702628,5703836,5704645,5701532,5704581,5704879,5705545,5706125,5705299,5708449,5704027,5704289,5706711,5705927,5703479,5703693,5704281,5700057,5705421,5702636,5709451,5707840,5705697,5701844,5706133,5706093,5709161,5705489,5702023,5706645,5705091,5707357,5706989,5703591,5706391,5706467,5706229,5705147,5705585,5702912,5706523,5704641,5706073,5703913,5708950,5707625,5704063,5707063,5702785,5705179,5706471,5705215,5703202,5702803,5704301,5708882,5706161,5703054,5705075,5704273,5709197,5700042,5704285,5706661,5705621,5704448,5704039,5706884,5704436,5700937,5705231,5701650,5708061,5700876,5706315,5703705,5705805,5705047,5700016,5705858,5706011,5706007,5705915,5704148,5704160,5707844,5703182,5703661,5704253,5702632,5700650,5704047,5707289,5703210,5706924,5703543,5704371,5701558,5704480,5707331,5700752,5701445,5708480,5704055,5705131,5702097,5704544,5703451,5703754,5707413,5700808,5703355,5703006,5707947,5706077,5701602,5707047,5702441,5700138,5704633,5707059,5702556,5702459,5700019,5704144,5700358,5704907,5707445,5708349,5705027,5706621,5704269,5700100,5707345,5700998,5705581,5704665,5701889,5704899,5707397,5707117,5708127,5706641,5700422,5704403,5701433,5707425,5706363,5702135,5708494,5708932,5707832,5704399,5703259,5703539,5707949,5703615,5708325,5708512,5703535,5707051,5702445,5703323,5701820,5707241,5705313,5703839,5706507,5701731,5707177,5701536,5707209,5703391,5700884,5701220,5706270,5701067,5705505,5707715,5709286,5708878,5706003,5708946,5705895,5700446,5705947,5706589,5704561,5704729,5704887,5706261,5701030,5702301,5705777,5700680,5705103,5705557,5706791,5707161,5706897,5705043,5707197,5700893,5708695,5705625,5703319,5705041,5707407,5706933,5701967,5700559,5701594,5703347,5708353,5705223,5708838,5703819,5705317,5704096,5700933,5702640,5702011,5705329,5709065,5707657,5706319,5704444,5705461,5707605,5706069,5703792,5706055,5701453,5708490,5703750,5704528,5703871,5706101,5708223,5706423,5709133,5708393,5703879,5707165,5704625,5707765,5706657,5708826,5707965,5704661,5700028,5708516,5701574,5709185,5708401,5701034,5705023,5706121,5703745,5708462,5708037,5708846,5705653,5701963,5706081,5700103,5706015,5705887,5707986,5701915,5701761,5702332,5707796,5705533,5704883,5704585,5704391,5706375,5707737,5707711,5703190,5707091,5707757,5706403,5700250,5707741,5705809,5705235,5702027,5700105,5704257,5701626,5704939,5705705,5707525,5705883,5703815],"crc":0,"cvi":[]},"drive_url":"//drive.google.com?authuser\u003d0\u0026usp\u003dsheets_web","docs-sup":"/spreadsheets"}; _docs_flag_cek= null ;</script></head><script nonce="5zRsS/sWVQdCN0kcDXBZIg">document.addEventListener('DOMContentLoaded', init);</script><body><div id="top-bar"><div id="doc-title"><span class="name">IMPP smaple table : Tabellenblatt1</span></div></div><div id="sheets-viewport"><div id="0" style="display:none;position:relative;" dir="ltr"><div class="ritz grid-container" dir="ltr"><table class="waffle" cellspacing="0" cellpadding="0"><thead><tr><th class="row-header freezebar-origin-ltr header-shim row-header-shim"></th><th id="0C0" style="width:385px" class="header-shim"></th><th id="0C1" style="width:565px" class="header-shim"></th><th id="0C2" style="width:205px" class="header-shim"></th><th id="0C3" style="width:403px" class="header-shim"></th><th id="0C4" style="width:100px" class="header-shim"></th></tr></thead><tbody><tr style='height:20px;'><th id="0R0" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">1</div></th><td class="s0">Name </td><td class="s0" dir="ltr">Description</td><td class="s0" dir="ltr">Category</td><td class="s0" dir="ltr">Extra info</td><td class="s0">EOL</td></tr><tr style='height:20px;'><th id="0R1" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">2</div></th><td class="s1">Deep sulcus sign</td><td class="s1">Indirect indicator of a pneumothorax</td><td class="s1">Radiologic sign</td><td class="s1">Deep, lucent, ipsilateral costophrenic angle</td><td class="s1">EOL</td></tr><tr style='height:20px;'><th id="0R2" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">3</div></th><td class="s1">Cupola sign</td><td class="s1">Indirect indicator of a pneumoperitoneum</td><td class="s1">Radiologic sign</td><td class="s1">Lucency overlying the lower thoracic vertebral bodies</td><td class="s1">EOL</td></tr><tr style='height:20px;'><th id="0R3" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">4</div></th><td class="s1">Fabella sign</td><td class="s1 softmerge"><div class="softmerge-inner" style="width: 562px; left: -1px;">Displacement of the fabella that is seen in cases of synovial effusion and popliteal fossa masses</div></td><td class="s1">Radiologic sign</td><td></td><td class="s1">EOL</td></tr><tr style='height:20px;'><th id="0R4" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">5</div></th><td class="s1">Codman triangle</td><td class="s1">Indicator of a bone tumor</td><td class="s1">Radiologic sign</td><td class="s1">Due to a lesion raising the periosteum away from the bone</td><td class="s1">EOL</td></tr><tr style='height:20px;'><th id="0R5" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">6</div></th><td class="s1">Break in the neck of the scottie dog</td><td class="s1">Indicator of Spondylolisthesis in a vertebral body</td><td class="s1">Radiologic sign</td><td class="s1">Mostly L4/L5</td><td class="s1">EOL</td></tr><tr style='height:20px;'><th id="0R6" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">7</div></th><td class="s1">Hämatozechi</td><td class="s1">Rote Darmblutung</td><td class="s1">test</td><td class="s1 softmerge"><div class="softmerge-inner" style="width: 400px; left: -1px;">Bei größeren Blutmengen ist die Passagezeit innerhalb des Darms kurz. Es kommt nur eingeschränkt zu einem bakteriellen Abbau mit der Folge, dass das Blutunverändert rot bleibt. Die Hämatochezie kann bei allen Formen der gastrointestinalen Blutung vorkommen.</div></td><td class="s1">EOL</td></tr><tr style='height:20px;'><th id="0R7" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">8</div></th><td class="s1">Morbus Still</td><td class="s1">juvenile idiopathische Arthritis</td><td class="s1">test</td><td class="s1">2.-4. LJ. Sonderform: Adulter Morbus Still</td><td class="s1">EOL</td></tr><tr style='height:20px;'><th id="0R8" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">9</div></th><td class="s1">Dermatitis herpetiformis Duhring</td><td class="s1">Blasenbildende Autoimmundermatose</td><td class="s1">test</td><td class="s1">U.a. bei Zöliakie</td><td class="s1">EOL</td></tr><tr style='height:20px;'><th id="0R9" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">10</div></th><td class="s1">Pleozytose</td><td class="s1">Erhöhte Zellzahl in einer Körperflüssigkeit</td><td class="s1">test</td><td></td><td class="s1">EOL</td></tr><tr style='height:20px;'><th id="0R10" style="height: 20px;" class="row-headers-background row-header-shim"><div class="row-header-wrapper" style="line-height: 20px;">11</div></th><td class="s1">SHBG</td><td class="s1">Sex hormone-binding globulin</td><td class="s1">Endocrinology</td><td></td><td class="s1">EOL</td></tr></tbody></table></div></div></div><div id="footer"><span>Published by <a target="_blank" title="Learn more about Google Sheets" href="https://docs.google.com/spreadsheets/?authuser=0&amp;usp=sheets_web">Google Sheets</a></span><span class="dash">&ndash;</span><a href="https://docs.google.com/abuse?id=AKkXjozZYLtls7EAUUoNklhMYNsWotodmKXr8-b5pez5iFnYaZEzkrlozpu6UuYxsN0_aIA4f0x946n11qup3GU:0">Missbrauch melden</a><span class="dash">&ndash;</span><span>Automatisch alle 5 Minuten aktualisiert</span></div>
+<script type='text/javascript' nonce='5zRsS/sWVQdCN0kcDXBZIg'>
+function posObj(sheet, id, row, col, x, y) {
+  var rtl = false;
+  var sheetElement = document.getElementById(sheet);
+  if (!sheetElement) {
+    sheetElement = document.getElementById(sheet + '-grid-container');
+  }
+  if (sheetElement) {
+    rtl = sheetElement.getAttribute('dir') == 'rtl';
+  }
+  var r = document.getElementById(sheet+'R'+row);
+  var c = document.getElementById(sheet+'C'+col);
+  if (r && c) {
+    var objElement = document.getElementById(id);
+    var s = objElement.style;
+    var t = y;
+    while (r && r != sheetElement) {
+      t += r.offsetTop;
+      r = r.offsetParent;
+    }
+    var offsetX = x;
+    while (c && c != sheetElement) {
+      offsetX += c.offsetLeft;
+      c = c.offsetParent;
+    }
+    if (rtl) {
+      offsetX -= objElement.offsetWidth;
+    }
+    s.left = offsetX + 'px';
+    s.top = t + 'px';
+    s.display = 'block';
+    s.border = '1px solid #000000';
+  }
+};
+function posObjs() {
+};
+posObjs();</script>
+<script type="text/javascript" nonce="5zRsS/sWVQdCN0kcDXBZIg">activeSheetId = '0'; switchToSheet('0');</script></body></html>

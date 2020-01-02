@@ -1,44 +1,43 @@
-use self::lib::*;
+use rand::Rng;
 use regex::Regex;
+use std::convert::TryFrom;
 use std::io;
+use std::time::{Instant};
+use ureq;
 
-mod lib;
+#[allow(dead_code)]
+mod lib_impp;
 
-fn print_welcome_msg(number_of_questions: usize) {
+fn print_welcome_msg() {
     println!(
         r#"-----------------------
 - Welcome to the IMPP -
------------------------
-> To see all questions in the database type 'db'.
+----------------------- 
 > To play a game of normal single-choice questions type 'mc' or 'mc -n'
 |- For a game of automatic single-choice questions add '-a' (eg. 'mc -a')
 |- For a reversed (Jeopardy-Style) game add '-a' (eg. 'mc -a -j')
 |- To only get questions about a specific topic add '-t "topic"
 > To edit your database url type 'ed'
-> To go back to this menu type 'exit', to quit the program type 'quit'
-We have {} items in our database."#,
-        number_of_questions
+> To go back to this menu type 'exit', to quit the program type 'quit'"#,
     );
 }
 
-fn get_new_spreadsheet_url() -> String {
+fn fetch_data(url: &str) -> String {
+    let my_string = ureq::get(url)
+        .call()
+        .into_string()
+        .expect("Could not open URL");
+    my_string
+}
+
+fn get_new_spreadsheet_url() {
     let mut spreadsheet_url: String;
-    loop {
-        spreadsheet_url = get_input("Please specify the URL of your spreadsheet:");
-        if check_database(&spreadsheet_url) {
-            insert_pref_key("primary_db", &spreadsheet_url);
-            break;
-        } else {
-            let check_input = get_input(
-                "Your database seems to be empty. Are you sure you want to continue? y/n",
-            );
-            if check_input.contains('y') {
-                insert_pref_key("primary_db", &spreadsheet_url);
-                break;
-            }
-        }
-    }
-    spreadsheet_url
+    spreadsheet_url = get_input("Please specify the URL of your spreadsheet:");
+    // TODO: Check Result
+    let now = Instant::now();
+    println!("Importing database");
+    let import_count = lib_impp::import_googlesheet(fetch_data(&spreadsheet_url), "");
+    println!("\nImported {} objects. Import took {} seconds.", import_count, now.elapsed().as_secs());
 }
 
 fn get_input(message: &str) -> String {
@@ -63,39 +62,23 @@ fn extract_topic(input_string: &str) -> &str {
 }
 
 fn main() {
-    // load our spreasheet url
-    let mut spreadsheet_url = return_pref_key("primary_db");
-    if spreadsheet_url.is_empty() {
+    // Check if we have a database file
+    if !lib_impp::get_database_status("") == true {
         println!("You seem to be here for the first time.");
-        spreadsheet_url = get_new_spreadsheet_url();
     }
 
-    // Initialise database
-    let raw_data = fetch_data(&spreadsheet_url).unwrap();
-    let questions_db = extract_from_raw_data(raw_data);
     // START LOOP
     loop {
-        print_welcome_msg(questions_db.len());
+        print_welcome_msg();
         let mut input_curr = String::new();
         let input_root = get_input("");
         if input_root.contains("quit") {
             break;
-        } else if input_root.contains("db") {
-            for item in &questions_db {
-                println!(
-                    "Frage: \'{}\', Antwort: \'{}\', Kategorie: \'{}\', Extra: \'{}\'",
-                    item.question, item.answer, item.category, item.extra
-                );
-            }
-        } else if input_root.contains("ed") {
+        }
+        else if input_root.contains("ed") {
             get_new_spreadsheet_url();
-            println!("Database changed, please restart program.");
-            break;
         } else if input_root.contains("mc") {
             loop {
-                let num_mc_questions = 5;
-                let this_question: String;
-                let this_answer: String;
                 let characters: [String; 10] = [
                     String::from("A"),
                     String::from("B"),
@@ -108,108 +91,70 @@ fn main() {
                     String::from("I"),
                     String::from("J"),
                 ];
-                let question_num =
-                    generate_random_question_number(&questions_db, extract_topic(&input_root));
-                let mut mc_questions_vec = generate_mc_questions(
-                    &questions_db,
-                    question_num,
-                    input_root.contains("-j"),
-                    num_mc_questions,
+                let question_num = lib_impp::generate_random_question(
+                    String::from(extract_topic(&input_root)),
+                    "",
                 );
-                mc_questions_vec = order_vec_by_rand(mc_questions_vec);
+                let question_vector: Vec<lib_impp::Question> = lib_impp::get_question_vector(
+                    &lib_impp::import_json_question_db(""),
+                    input_root.contains("-j"),
+                    usize::try_from(question_num)
+                        .expect("Our question number could not be converted to usize."),
+                );
+                let mc_distractors =
+                    lib_impp::get_mc_distractors(question_num, 4, input_root.contains("-j"), "");
+                let our_distractors_length = mc_distractors.len();
 
                 println!("------------------------------------------------------------------------------------------------------");
 
-                // Switch answer and question in jeopardy-mode
-                if input_root.contains("-j") {
-                    this_question = String::from(&questions_db[question_num].answer);
-                    this_answer = String::from(&questions_db[question_num].question);
-                } else {
-                    this_question = String::from(&questions_db[question_num].question);
-                    this_answer = String::from(&questions_db[question_num].answer);
-                }
                 // Print question
                 if input_root.contains("-a") {
-                    println!("Frage: \'{}\' \n", this_question);
+                    println!("Frage: \'{}\' \n", &question_vector[0].question);
                 } else {
-                    println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", this_question);
+                    println!("Frage: \'{}\' (type \'m\' for multiple choice mode or any key to reveal the answer)", &question_vector[0].question);
                     input_curr = get_input("");
                 }
                 // print mc questions (only if more than one mc answer is avaliable)
                 if input_root.contains("-a")
-                    || input_curr.contains('m') && mc_questions_vec.len() != 1
+                    || input_curr.contains('m') && our_distractors_length != 0
                 {
+                    let our_rand_number =
+                        rand::thread_rng().gen_range(0, our_distractors_length + 1);
                     let mut i = 0;
-                    while i < mc_questions_vec.len() {
-                        println!("{}) {}", characters[i], mc_questions_vec[i].answer);
+                    let mut j = 0;
+                    while i < our_distractors_length + 1 {
+                        let mut this_mc_answer = &question_vector[0].answer;
+                        if i != our_rand_number {
+                            this_mc_answer = &mc_distractors[j].answer;
+                            j += 1;
+                        }
+                        println!("{}) {}", characters[i], this_mc_answer);
                         i += 1;
                     }
+
                     // Check answer input
                     input_curr = get_input("").to_string().to_uppercase();
                     if characters.contains(&input_curr) {
                         let index = characters.iter().position(|r| *r == input_curr).unwrap();
-                        if index < mc_questions_vec.len() {
-                            if this_question == mc_questions_vec[index].question {
-                                println!("{}) is correct!", input_curr);
+                        if index < our_distractors_length + 1 {
+                            if our_rand_number == index {
+                                print!("{} is correct! ", &input_curr);
                             } else {
-                                println!("{}) is wrong!", input_curr);
+                                print!("{} is wrong! ", &input_curr);
                             }
                         }
                     }
                 }
                 // Return correct answer
-                println!("The correct answer is: {}", this_answer);
-                if &questions_db[question_num].extra != "" {
-                    println!("Extra info: {}", &questions_db[question_num].extra);
+                println!("The correct answer is: {}", &question_vector[0].answer);
+                if &question_vector[0].extra != "" {
+                    println!("Extra info: {}", &question_vector[0].extra);
                 }
 
                 if input_curr.to_uppercase().contains("EXIT") {
                     break;
                 }
             }
-        }
-    }
-}
-
-#[cfg(test)]
-mod main_tests {
-    use super::*;
-
-    mod return_by_topic {
-        use super::*;
-
-        #[test]
-        fn extract_topic_test_string() {
-            assert!(extract_topic("-t \"test topic\"") == "test topic");
-        }
-
-        #[test]
-        fn extract_topic_empty_string() {
-            assert!(extract_topic("-s \"fail this test\"").is_empty());
-        }
-
-        #[test]
-        fn return_question_by_topic() {
-            let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
-            let raw_data_test = fetch_data(&database_url).unwrap();
-            let questions_db = extract_from_raw_data(raw_data_test);
-            let this_number = generate_random_question_number(
-                &questions_db,
-                extract_topic(&"-t \"Endocrinology\""),
-            );
-            assert!(questions_db[this_number].question == "SHBG");
-        }
-
-        #[test]
-        fn return_question_for_invalid_topic() {
-            let database_url = "https://docs.google.com/spreadsheets/d/14fNP2Elca82rryRJ8-a_XwH3_oZgrJyXqh7r7Q7GuEc/edit#gid=0";
-            let raw_data_test = fetch_data(&database_url).unwrap();
-            let questions_db = extract_from_raw_data(raw_data_test);
-            let this_number = generate_random_question_number(
-                &questions_db,
-                extract_topic(&"-t \"wrong category\""),
-            );
-            assert!(!(questions_db[this_number].question.is_empty()));
         }
     }
 }
