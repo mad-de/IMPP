@@ -92,6 +92,7 @@ pub fn get_mc_distractors(
 pub fn get_categories(path: &str) -> HashSet<String> {
     let questions_db = import_json_question_db(&path);
     let mut categories = HashSet::new();
+    categories.insert(String::from("All"));
     for item in &questions_db {
         if !categories.contains(&item.category) {
             categories.insert(String::from(&item.category));
@@ -419,7 +420,7 @@ mod module_tests {
 
         #[test]
         fn count_known_categories() {
-            assert!(get_categories("src/tests/").len() == 3);
+            assert!(get_categories("src/tests/").len() == 4);
         }
         #[test]
         fn test_database_exists() {
