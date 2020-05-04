@@ -8,6 +8,7 @@ use ureq;
 #[allow(dead_code)]
 mod lib_impp;
 
+use std::fs;
 fn print_welcome_msg() {
     println!(
         r#"-----------------------
@@ -88,8 +89,9 @@ fn main() {
             get_new_spreadsheet_url();
         } else if input_root.contains("db") {
             let db_vector = lib_impp::import_json_question_db("");
-            println!("{:?}", db_vector);
-        } else if input_root.contains("mc") {
+println!("{:?}", db_vector);
+        } 
+else if input_root.contains("mc") {
             loop {
                 // Initialize set of characters for display
                 let characters: [String; 10] = [

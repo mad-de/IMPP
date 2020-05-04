@@ -1,5 +1,4 @@
 use rand::Rng;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashSet;
@@ -20,11 +19,6 @@ pub struct Question {
     pub category: String,
     pub extra: String,
 }
-
-pub static BEGIN_CHARS: &str = "<td class=\"s[1-9]{1}\">";
-pub static BEGIN_ALT_CHARS: &str = "<td class=\"s[1-9]{1} softmerge\">";
-pub static BEGIN_ALT_EXTRA_CHARS: &str =
-    r#"<div class="softmerge-inner" style="width: 512px; left: -1px;">"#;
 
 // Main function to import a http request from a Google Sheet
 pub fn import_googlesheet(httprequest: String, path: &str) -> i32 {
@@ -149,6 +143,47 @@ pub fn get_question_vector(
     this_questions_vec
 }
 
+// Read the next value (cell) from a googlesheet. Cuts the html string and returns the value and the rest of the html string 
+pub fn extract_next_gsheet_value(string: String) -> Vec<String> {
+	// Go to the first position of a opening <
+    let mut pos = string.find(">").unwrap() + 1;
+    let mut second_container = false;
+
+	// Disect: is the following a closing </.. expression? Cut one more container
+    if string.chars().nth(pos).unwrap().to_string() == "<"
+        && string.chars().nth(pos + 1).unwrap().to_string() != "/"
+    {
+        pos = string.find(">").unwrap() + 2;
+        let (_old_string, new_string) = string.split_at(pos);
+        pos = new_string.find(">").unwrap() + 1 + pos;
+        // is there yet another container? Cut it as well
+        if string.chars().nth(pos).unwrap().to_string() == "<"
+            && string.chars().nth(pos + 1).unwrap().to_string() != "/"
+        {
+            let (_old_string, newer_string) = new_string.split_at(pos);
+		// Not sure how I ended up with a value of + 7 to get to the correct position. Works however.
+            let pos2 = newer_string.find(">").unwrap() + 7 + pos;
+            pos = pos2;
+	// We need that later to set the correct position
+            second_container = true;
+        }
+    } else {
+        pos = string.find(">").unwrap() + 1;
+    }
+    let (_old_string, new_string) = string.split_at(pos);
+// Jump to ower opening < as an end for our value
+    pos = new_string.find("<").unwrap();
+	// cut the </div> from the value 
+    if second_container == true {
+        pos = pos + 6;
+    }
+    let (value, new_string) = new_string.split_at(pos);
+    let string_array: [String; 2] = [
+        value.replace("</div>", "").to_string(),
+        new_string.to_string(),
+    ];
+    string_array.to_vec()
+}
 // Extract database from http request string
 pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
     let mut this_id: i32 = 0;
@@ -158,95 +193,49 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
     let mut this_extra: String;
     let mut questions_db = vec![];
 
-    while Regex::new(BEGIN_CHARS).unwrap().is_match(&string_array[0]) {
-        let mut initial = true;
-        while (string_array[1] == "" || string_array[1] == "EOL" || initial)
-            && Regex::new(BEGIN_CHARS).unwrap().is_match(&string_array[0])
-        {
-            // search for the first normally formatted field
-            extract_field_value(&mut string_array).unwrap();
-            initial = false;
-        }
-        if string_array[1] == "EOL" {
-            // if we get the last EOL break
+    let initial_row_string = "</th><td";
+    string_array[1] = string_array[0].to_string();
+    // Main loop in this function: As long as I can find a start string (indicating the begin of a new row) I'll run this
+    while string_array[1].contains(initial_row_string) {
+	// find the first position, add the length of our start string
+        let pos = string_array[1]
+            .find(initial_row_string)
+            .unwrap_or(string_array[1].len())
+            + initial_row_string.len();
+	// Remove everything before our string as we don't need it
+        let (_old_string, new_string) = string_array[1].split_at(pos);
+
+	// FILL OUR DB
+        // Question
+        string_array = extract_next_gsheet_value(new_string.to_string());
+        this_question = string_array[0].to_string();
+        // Answer
+        string_array = extract_next_gsheet_value(string_array[1].to_string());
+        this_answer = string_array[0].to_string();
+        // Category
+        string_array = extract_next_gsheet_value(string_array[1].to_string());
+        this_category = string_array[0].to_string();
+        // Extra info
+        string_array = extract_next_gsheet_value(string_array[1].to_string());
+        this_extra = string_array[0].to_string();
+
+        let question1 = Question {
+            id: this_id,
+            question: this_question,
+            answer: this_answer.clone(),
+            category: this_category.clone(),
+            extra: this_extra.clone(),
+        };
+	// Don't save the table header
+        if this_id == 0 {
+            this_id = 1;
+        } else if question1.question.is_empty() && question1.answer.is_empty() {
         } else {
-            this_question = string_array[1].to_string();
-            extract_field_value(&mut string_array).unwrap();
-            if string_array[1] != "EOL" {
-                this_answer = string_array[1].to_string();
-            } else {
-                this_answer = String::from("");
-            }
-            extract_field_value(&mut string_array).unwrap();
-            if string_array[1] != "EOL" {
-                this_category = string_array[1].to_string();
-            } else {
-                this_category = String::from("");
-            }
-            extract_field_value(&mut string_array).unwrap();
-
-            if string_array[1] != "EOL" {
-                this_extra = string_array[1].to_string();
-            } else {
-                this_extra = String::from("");
-            }
-
-            let question1 = Question {
-                id: this_id,
-                question: this_question,
-                answer: this_answer.clone(),
-                category: this_category.clone(),
-                extra: this_extra.clone(),
-            };
-            if question1.question.is_empty() && question1.answer.is_empty() {
-            } else {
-                questions_db.push(question1);
-                this_id = this_id + 1;
-                // Only for Desktop version
-                print!("\rImporting dataset #{}", this_id);
-            }
+            questions_db.push(question1);
+            this_id = this_id + 1;
         }
     }
-
     questions_db
-}
-
-// Extract a value from a string
-pub fn extract_field_value(string_array: &mut [String]) -> Result<(), Error> {
-    if string_array.is_empty() {
-        return Err(Error::Input);
-    }
-    let mut end_chars = "</td>";
-    let end_alt_chars = "</div>";
-    let mut pos_alt = 10000;
-    let mut pos = Regex::new(BEGIN_CHARS)
-        .unwrap()
-        .find(&string_array[0])
-        .unwrap()
-        .end(); // Finds first encounter of a substring in our string
-    if Regex::new(BEGIN_ALT_CHARS)
-        .unwrap()
-        .is_match(&string_array[0])
-    {
-        pos_alt = Regex::new(BEGIN_ALT_CHARS)
-            .unwrap()
-            .find(&string_array[0])
-            .unwrap()
-            .end()
-            + BEGIN_ALT_EXTRA_CHARS.chars().count();
-    }
-    if pos_alt < pos {
-        pos = pos_alt;
-        end_chars = end_alt_chars;
-    }
-
-    let (_old_string, new_string) = string_array[0].split_at(pos); // cut everything before our string
-    pos = new_string.find(end_chars).unwrap(); // find end of our string
-    let (this_string, this_item) = new_string.split_at(pos); // extradite string and generate new string
-    let clone_this_string = String::from(this_string); // copy string with mut until I figure out a nicer way to do it
-    string_array[0] = String::from(this_item); // Return values
-    string_array[1] = clone_this_string;
-    Ok(())
 }
 
 // Generate a random question number
@@ -336,15 +325,6 @@ pub fn generate_mc_distractors(
 mod base_function_tests {
     use super::*;
 
-    mod extract_field_value {
-        use super::*;
-
-        #[test]
-        fn from_empty_string_array() {
-            let mut arr = vec![];
-            assert!(extract_field_value(&mut arr).is_err());
-        }
-    }
     mod check_database {
         use super::*;
 
@@ -367,7 +347,7 @@ mod module_tests {
         fn return_correct_title() {
             let sample_table =
                 String::from(fs::read_to_string("src/tests/sample_table.txt").unwrap());
-            assert!(return_title(sample_table) == "IMPP sample table".to_string());
+            assert!(return_title(sample_table) == "IMPP sample table - Google Tabellen".to_string());
         }
 
         // Check if result from an import equals our sample json file
