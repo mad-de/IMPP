@@ -41,9 +41,13 @@ pub fn get_database_status(path: &str) -> bool {
 
 // Main function to generate a random question number
 pub fn generate_random_question(category: String, path: &str) -> i32 {
+    let mut this_category = "";
+    if &category != "All" {
+        this_category = &category;
+    }
     i32::try_from(generate_random_question_number(
         &import_json_question_db(path),
-        &category,
+        this_category,
     ))
     .expect("Random number could not be converted to i32.")
 }
@@ -281,8 +285,8 @@ pub fn generate_mc_distractors(
         i += 1;
     }
 
-    if count_category_items < num_mc_questions {
-        this_num_mc = count_category_items;
+    if (count_category_items - 1) < num_mc_questions {
+        this_num_mc = count_category_items - 1;
     }
 
     // Build two arrays (one where all the answers are saved which we don't want to use anymore and one where all answers are saved.

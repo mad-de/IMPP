@@ -157,9 +157,9 @@ fn main() {
                         if index < our_distractors_length + 1 {
                             // Reveal correct answer
                             if our_rand_number == index {
-                                print!("{} is correct! ", &input_curr);
+                                println!("{} is correct! ", &input_curr);
                             } else {
-                                print!("{} is wrong! ", &input_curr);
+                                println!("{} is wrong! ", &input_curr);
                             }
                         }
                     }
@@ -169,7 +169,6 @@ fn main() {
                 if &question_vector[0].extra != "" {
                     println!("Extra info: {}", &question_vector[0].extra);
                 }
-
                 if input_curr.to_uppercase().contains("EXIT") {
                     break;
                 }
