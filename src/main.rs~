@@ -80,7 +80,6 @@ fn main() {
     // START LOOP
     loop {
         print_welcome_msg();
-
         let mut input_curr = String::new();
         let input_root = get_input("");
         if input_root.contains("quit") {
@@ -90,8 +89,6 @@ fn main() {
         } else if input_root.contains("db") {
             let db_vector = lib_impp::import_json_question_db("");
             println!("{:?}", db_vector);
-        } else if input_root.contains("ca") {
-            println!("Categories: {:?}", lib_impp::get_categories(""));
         } else if input_root.contains("mc") {
             loop {
                 // Initialize set of characters for display

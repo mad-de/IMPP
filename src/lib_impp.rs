@@ -1,7 +1,6 @@
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::collections::HashSet;
 use std::convert::TryFrom;
 use std::fs;
 use std::path::Path;
@@ -87,15 +86,18 @@ pub fn get_mc_distractors(
 }
 
 // Main function to return a vector with all categories
-pub fn get_categories(path: &str) -> HashSet<String> {
+pub fn get_categories(path: &str) -> Vec<String> {
     let questions_db = import_json_question_db(&path);
-    let mut categories = HashSet::new();
-    categories.insert(String::from("All"));
+    let mut categories = Vec::new();
+    categories.push(String::from("All"));
     for item in &questions_db {
         if !categories.contains(&item.category) {
-            categories.insert(String::from(&item.category));
+            categories.push(String::from(&item.category));
         }
     }
+    categories[0] = String::from("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    categories.sort();
+    categories[0] = String::from("All");
     categories
 }
 
@@ -149,7 +151,6 @@ pub fn get_question_vector(
 
 // Read the next value (cell) from a googlesheet. Cuts the html string and returns the value and the rest of the html string
 pub fn extract_next_gsheet_value(string: String) -> Vec<String> {
-    let mut second_container = false;
     // Go to the first position of a tag closing (>)
     let mut pos = string.find(">").unwrap() + 1;
 
@@ -160,36 +161,16 @@ pub fn extract_next_gsheet_value(string: String) -> Vec<String> {
         pos = string.find(">").unwrap() + 2;
         let (_old_string, new_string) = string.split_at(pos);
         pos = new_string.find(">").unwrap() + 1 + pos;
-        // is there yet another container? Cut it as well
-        if string.chars().nth(pos).unwrap().to_string() == "<"
-            && string.chars().nth(pos + 1).unwrap().to_string() != "/"
-        {
-            let (_old_string, newer_string) = new_string.split_at(pos);
-            // Not sure how I ended up with a value of + 7 to get to the correct position. Works however.
-            let pos2 = newer_string.find(">").unwrap() + 7 + pos;
-            pos = pos2;
-            // We need that later to set the correct position
-            second_container = true;
-        }
     } else {
         pos = string.find(">").unwrap() + 1;
     }
     let (_old_string, new_string) = string.split_at(pos);
-    // Jump to ower opening < as an end for our value
+    // Jump to the opening < as an end for our value
     pos = new_string.find("<").unwrap();
-    // cut the </div> from the value
-    if second_container == true {
-        pos = pos + 6;
-    }
-    let (value, mut new_string) = new_string.split_at(pos);
-    //Delete following </div>
-    if &new_string[..6] == "</div>" {
-        new_string = &new_string[6..];
-    }
-    let string_array: [String; 2] = [
-        value.replace("</div>", "").to_string(),
-        new_string.to_string(),
-    ];
+
+    let (value, new_string) = new_string.split_at(pos);
+
+    let string_array: [String; 2] = [value.to_string(), new_string.to_string()];
     string_array.to_vec()
 }
 // Extract database from http request string
@@ -201,8 +182,28 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
     let mut this_extra: String;
     let mut questions_db = vec![];
 
+    // Cut everything before and after the table tags
+    string_array[0] = string_array[0]
+        [string_array[0].find("<table").unwrap()..string_array[0].find("</table").unwrap()]
+        .to_string();
+
     // replace a few expressions that would otherwise fuck up our parser
-    string_array[0] = string_array[0].replace("<br>", "");
+    let expressions_remove = ["<br>", "<br />", "</a>", "</div>"];
+    for replace_item in &expressions_remove {
+        string_array[0] = string_array[0].replace(replace_item, "");
+    }
+    // replace the containers that would fuck up our parser
+    let containers_remove = ["<a", "<div"];
+    for replace_container in &containers_remove {
+        while string_array[0].contains(replace_container) {
+            let container_pos = string_array[0].find(replace_container).unwrap();
+            let (container_old_string, container_new_string) =
+                string_array[0].split_at(container_pos);
+            let close_container_pos = container_new_string.find(">").unwrap() + 1;
+            string_array[0] = container_old_string.to_owned()
+                + &container_new_string[close_container_pos..].to_owned();
+        }
+    }
 
     let initial_row_string = "</th><td";
     string_array[1] = string_array[0].to_string();
