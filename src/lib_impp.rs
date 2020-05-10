@@ -147,13 +147,13 @@ pub fn get_question_vector(
     this_questions_vec
 }
 
-// Read the next value (cell) from a googlesheet. Cuts the html string and returns the value and the rest of the html string 
+// Read the next value (cell) from a googlesheet. Cuts the html string and returns the value and the rest of the html string
 pub fn extract_next_gsheet_value(string: String) -> Vec<String> {
-	// Go to the first position of a opening <
-    let mut pos = string.find(">").unwrap() + 1;
     let mut second_container = false;
+    // Go to the first position of a tag closing (>)
+    let mut pos = string.find(">").unwrap() + 1;
 
-	// Disect: is the following a closing </.. expression? Cut one more container
+    // Disect: is the following a closing </.. expression? Cut one more container
     if string.chars().nth(pos).unwrap().to_string() == "<"
         && string.chars().nth(pos + 1).unwrap().to_string() != "/"
     {
@@ -165,23 +165,27 @@ pub fn extract_next_gsheet_value(string: String) -> Vec<String> {
             && string.chars().nth(pos + 1).unwrap().to_string() != "/"
         {
             let (_old_string, newer_string) = new_string.split_at(pos);
-		// Not sure how I ended up with a value of + 7 to get to the correct position. Works however.
+            // Not sure how I ended up with a value of + 7 to get to the correct position. Works however.
             let pos2 = newer_string.find(">").unwrap() + 7 + pos;
             pos = pos2;
-	// We need that later to set the correct position
+            // We need that later to set the correct position
             second_container = true;
         }
     } else {
         pos = string.find(">").unwrap() + 1;
     }
     let (_old_string, new_string) = string.split_at(pos);
-// Jump to ower opening < as an end for our value
+    // Jump to ower opening < as an end for our value
     pos = new_string.find("<").unwrap();
-	// cut the </div> from the value 
+    // cut the </div> from the value
     if second_container == true {
         pos = pos + 6;
     }
-    let (value, new_string) = new_string.split_at(pos);
+    let (value, mut new_string) = new_string.split_at(pos);
+    //Delete following </div>
+    if &new_string[..6] == "</div>" {
+        new_string = &new_string[6..];
+    }
     let string_array: [String; 2] = [
         value.replace("</div>", "").to_string(),
         new_string.to_string(),
@@ -197,19 +201,22 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
     let mut this_extra: String;
     let mut questions_db = vec![];
 
+    // replace a few expressions that would otherwise fuck up our parser
+    string_array[0] = string_array[0].replace("<br>", "");
+
     let initial_row_string = "</th><td";
     string_array[1] = string_array[0].to_string();
     // Main loop in this function: As long as I can find a start string (indicating the begin of a new row) I'll run this
     while string_array[1].contains(initial_row_string) {
-	// find the first position, add the length of our start string
+        // find the first position, add the length of our start string
         let pos = string_array[1]
             .find(initial_row_string)
             .unwrap_or(string_array[1].len())
             + initial_row_string.len();
-	// Remove everything before our string as we don't need it
+        // Remove everything before our string as we don't need it
         let (_old_string, new_string) = string_array[1].split_at(pos);
 
-	// FILL OUR DB
+        // FILL OUR DB
         // Question
         string_array = extract_next_gsheet_value(new_string.to_string());
         this_question = string_array[0].to_string();
@@ -230,7 +237,7 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
             category: this_category.clone(),
             extra: this_extra.clone(),
         };
-	// Don't save the table header
+        // Don't save the table header
         if this_id == 0 {
             this_id = 1;
         } else if question1.question.is_empty() && question1.answer.is_empty() {
@@ -351,7 +358,9 @@ mod module_tests {
         fn return_correct_title() {
             let sample_table =
                 String::from(fs::read_to_string("src/tests/sample_table.txt").unwrap());
-            assert!(return_title(sample_table) == "IMPP sample table - Google Tabellen".to_string());
+            assert!(
+                return_title(sample_table) == "IMPP sample table - Google Tabellen".to_string()
+            );
         }
 
         // Check if result from an import equals our sample json file

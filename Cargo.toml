@@ -1,6 +1,6 @@
 [package]
 name = "impp"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["mad-de <cev_madde@msn.com>"]
 edition = "2018"
 
