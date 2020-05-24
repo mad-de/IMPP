@@ -150,7 +150,7 @@ pub fn get_question_vector(
 }
 
 // Read the next value (cell) from a googlesheet. Cuts the html string and returns the value and the rest of the html string
-pub fn extract_next_gsheet_value(string: String) -> Vec<String> {
+pub fn extract_next_gsheet_value(mut string: String) -> Vec<String> {
     // Go to the first position of a tag closing (>)
     let mut pos = string.find(">").unwrap() + 1;
 
@@ -164,13 +164,11 @@ pub fn extract_next_gsheet_value(string: String) -> Vec<String> {
     } else {
         pos = string.find(">").unwrap() + 1;
     }
-    let (_old_string, new_string) = string.split_at(pos);
-    // Jump to the opening < as an end for our value
-    pos = new_string.find("<").unwrap();
+    string = string[pos..].to_string();
 
-    let (value, new_string) = new_string.split_at(pos);
+    pos = string.find("<").unwrap();
 
-    let string_array: [String; 2] = [value.to_string(), new_string.to_string()];
+    let string_array: [String; 2] = [string[..pos].to_string(), string[pos..].to_string()];
     string_array.to_vec()
 }
 // Extract database from http request string
@@ -197,29 +195,24 @@ pub fn extract_from_raw_data(mut string_array: Vec<String>) -> Vec<Question> {
     for replace_container in &containers_remove {
         while string_array[0].contains(replace_container) {
             let container_pos = string_array[0].find(replace_container).unwrap();
-            let (container_old_string, container_new_string) =
-                string_array[0].split_at(container_pos);
-            let close_container_pos = container_new_string.find(">").unwrap() + 1;
-            string_array[0] = container_old_string.to_owned()
-                + &container_new_string[close_container_pos..].to_owned();
+            let close_container_pos = string_array[0][container_pos..].find(">").unwrap() + 1 + container_pos;
+
+            string_array[0] = string_array[0][..container_pos].to_string() + &string_array[0][close_container_pos..].to_string();
         }
     }
-
     let initial_row_string = "</th><td";
     string_array[1] = string_array[0].to_string();
     // Main loop in this function: As long as I can find a start string (indicating the begin of a new row) I'll run this
-    while string_array[1].contains(initial_row_string) {
+while string_array[1].contains(initial_row_string) {
         // find the first position, add the length of our start string
         let pos = string_array[1]
             .find(initial_row_string)
             .unwrap_or(string_array[1].len())
             + initial_row_string.len();
-        // Remove everything before our string as we don't need it
-        let (_old_string, new_string) = string_array[1].split_at(pos);
 
         // FILL OUR DB
         // Question
-        string_array = extract_next_gsheet_value(new_string.to_string());
+        string_array = extract_next_gsheet_value(string_array[1][pos..].to_string());
         this_question = string_array[0].to_string();
         // Answer
         string_array = extract_next_gsheet_value(string_array[1].to_string());
